@@ -21,6 +21,10 @@ fetchPaginate('https://api.example.com/foo')
   })
 ```
 
+```js
+fetchPaginate(url, options = {})
+```
+
 ## Options
 
 Supports all `fetch` options, plus:
