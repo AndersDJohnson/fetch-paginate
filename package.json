@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "main": "dist/main.js",
   "license": "MIT",
+  "repository": "AndersDJohnson/fetch-paginate",
   "scripts": {
     "test": "jest",
     "build": "webpack"
