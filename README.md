@@ -56,7 +56,7 @@ An optional function specifying how to parse responses. Return a promise.
 Defaults to parse JSON:
 
 ```js
-res => res.ok ? res.json() : undefined
+res => res.ok && res.status !== 204 ? res.json() : undefined
 ```
 
 ### `until`
