@@ -1,5 +1,7 @@
 # fetch-paginate
 
+[![npm](https://img.shields.io/npm/v/fetch-paginate.svg)](https://www.npmjs.com/package/fetch-paginate)
+
 Get multiple pages of results from a paginated API with the Link header via the Fetch API.
 
 Resolves with the last response object as `res` and the merged `data` object.
@@ -8,6 +10,14 @@ Isomorphic - works in Node and browser - if used with `isomorphic-fetch`.
 
 Requires a `fetch` polyfill for environments that don't support that.
 Recommended is `isomorphic-fetch` or `node-fetch` or `whatwg-fetch`.
+
+## Install
+
+[![npm install fetch-paginate (copy)](https://copyhaste.com/i?t=npm%20install%20fetch-paginate)](https://copyhaste.com/c?t=npm%20install%20fetch-paginate "npm install fetch-paginate (copy)")
+
+or:
+
+[![yarn add fetch-paginate (copy)](https://copyhaste.com/i?t=yarn%20add%20fetch-paginate)](https://copyhaste.com/c?t=yarn%20add%20fetch-paginate "yarn add fetch-paginate (copy)")
 
 ## Example
 
