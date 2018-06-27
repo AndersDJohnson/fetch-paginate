@@ -5,7 +5,7 @@ const fetchPaginate = (url, options = {}) => {
     paginate = true,
     items = data => data,
     merge = (pageData, nextData) => ([...items(pageData), ...nextData]),
-    parse = res => res.ok && res.status !== 204 ? res.json() : undefined,
+    parse = res => res.ok && res.status !== 204 ? res.json() : res.text(),
     until = (data, res) => false,
     ...rest
   } = options
