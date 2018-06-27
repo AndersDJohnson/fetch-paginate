@@ -4,7 +4,7 @@ const fetchPaginate = (url, options = {}) => {
   const {
     paginate = true,
     items = data => data,
-    merge = (data, pageData) => ([...data, ...items(pageData)]),
+    merge = (pageData, nextData) => ([...items(pageData), ...nextData]),
     parse = res => res.ok && res.status !== 204 ? res.json() : undefined,
     until = (data, res) => false,
     ...rest
@@ -12,9 +12,9 @@ const fetchPaginate = (url, options = {}) => {
 
   return fetch(url, rest)
     .then(async res => {
-      const data = await parse(res)
+      const pageData = await parse(res)
 
-      if (paginate && !until(data, res)) {
+      if (paginate && !until(pageData, res)) {
         if (res.headers) {
           const link = res.headers.get('link') || res.headers.get('Link')
 
@@ -22,11 +22,11 @@ const fetchPaginate = (url, options = {}) => {
             const { next } = parseLinkHeader(link) || {}
 
             if (next) {
-              const { data: pageData } = await fetchPaginate(next.url, options)
+              const { data: nextData } = await fetchPaginate(next.url, options)
 
               return {
                 res,
-                data: merge(data, pageData)
+                data: merge(pageData, nextData)
               }
             }
           }
@@ -35,7 +35,7 @@ const fetchPaginate = (url, options = {}) => {
 
       return {
         res,
-        data
+        data: pageData
       }
     })
 }
