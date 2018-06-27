@@ -35,7 +35,7 @@ const fetchPaginate = (url, options = {}) => {
 
       return {
         res,
-        data: pageData
+        data: items(pageData)
       }
     })
 }
