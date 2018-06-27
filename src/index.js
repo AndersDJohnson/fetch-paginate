@@ -14,7 +14,7 @@ const fetchPaginate = (url, options = {}) => {
     .then(async res => {
       const pageData = await parse(res)
 
-      if (paginate && !until(pageData, res)) {
+      if (res.ok && paginate && !until(pageData, res)) {
         if (res.headers) {
           const link = res.headers.get('link') || res.headers.get('Link')
 
