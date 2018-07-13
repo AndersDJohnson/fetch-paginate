@@ -42,7 +42,7 @@ Supports all `fetch` options, plus:
 
 An optional function specifying how to get items list from response data.
 
-Defaults to identity
+Defaults to identity:
 
 ```js
 data => data
