@@ -38,6 +38,10 @@ fetchPaginate(url, (options = {}))
 
 Supports all `fetch` options, plus:
 
+### `paginate`
+
+Whether to paginate at all (can disable per-request).
+
 ### `items`
 
 An optional function specifying how to get items list from response data.
@@ -55,7 +59,7 @@ An optional function specifying how to merge a page of results with previous. Re
 Defaults to concatenate arrays, assuming `items` option is correct:
 
 ```js
-;(acc, data) => [...acc, ...items(data)]
+;(page, data) => [...items(page), ...(data || [])]
 ```
 
 ### `parse`
