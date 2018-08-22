@@ -1,7 +1,7 @@
 {
   "name": "fetch-paginate",
   "description": "Get multiple pages from paginated API with Link header via Fetch API.",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "main": "dist/main.js",
   "license": "MIT",
   "repository": "AndersDJohnson/fetch-paginate",
