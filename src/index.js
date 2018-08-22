@@ -1,43 +1,57 @@
 import parseLinkHeader from 'parse-link-header'
 
-const fetchPaginate = (url, options = {}) => {
+const fetchPaginate = (url, options = {}, ongoingData) => {
   const {
     paginate = true,
     items = data => data,
-    merge = (pageData, nextData) => ([...items(pageData), ...nextData]),
-    parse = res => res.ok && res.status !== 204 ? res.json() : res.text(),
-    until = (data, res) => false,
+    merge = (pageData, nextData) => [...items(pageData), ...(nextData || [])],
+    parse = res => (res.ok && res.status !== 204 ? res.json() : res.text()),
+    until,
     ...rest
   } = options
 
-  return fetch(url, rest)
-    .then(async res => {
-      const pageData = await parse(res)
+  return fetch(url, rest).then(async res => {
+    const pageData = await parse(res)
 
-      if (res.ok && paginate && !until(pageData, res)) {
-        if (res.headers) {
-          const link = res.headers.get('link') || res.headers.get('Link')
+    const nextOngoingData = merge(pageData, ongoingData)
+    const untilOngoingData = Array.isArray(nextOngoingData)
+      ? nextOngoingData.reverse()
+      : untilOngoingData
 
-          if (link) {
-            const { next } = parseLinkHeader(link) || {}
+    const untilResult = until && until(pageData, untilOngoingData, res)
+    const isPromise = untilResult && untilResult.then
+    const hitUntil = isPromise ? await untilResult : untilResult
 
-            if (next) {
-              const { data: nextData } = await fetchPaginate(next.url, options)
+    if (res.ok && paginate && !hitUntil) {
+      if (res.headers) {
+        const link = res.headers.get('link') || res.headers.get('Link')
 
-              return {
-                res,
-                data: merge(pageData, nextData)
-              }
+        if (link) {
+          const { next } = parseLinkHeader(link) || {}
+
+          if (next) {
+            const { data: nextData } = await fetchPaginate(
+              next.url,
+              options,
+              nextOngoingData
+            )
+
+            const finalData = merge(pageData, nextData)
+
+            return {
+              res,
+              data: finalData
             }
           }
         }
       }
+    }
 
-      return {
-        res,
-        data: items(pageData)
-      }
-    })
+    return {
+      res,
+      data: items(pageData)
+    }
+  })
 }
 
 export default fetchPaginate

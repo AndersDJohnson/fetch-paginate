@@ -13,11 +13,11 @@ Recommended is `isomorphic-fetch` or `node-fetch` or `whatwg-fetch`.
 
 ## Install
 
-[![npm install fetch-paginate (copy)](https://copyhaste.com/i?t=npm%20install%20fetch-paginate)](https://copyhaste.com/c?t=npm%20install%20fetch-paginate "npm install fetch-paginate (copy)")
+[![npm install fetch-paginate (copy)](https://copyhaste.com/i?t=npm%20install%20fetch-paginate)](https://copyhaste.com/c?t=npm%20install%20fetch-paginate 'npm install fetch-paginate (copy)')
 
 or:
 
-[![yarn add fetch-paginate (copy)](https://copyhaste.com/i?t=yarn%20add%20fetch-paginate)](https://copyhaste.com/c?t=yarn%20add%20fetch-paginate "yarn add fetch-paginate (copy)")
+[![yarn add fetch-paginate (copy)](https://copyhaste.com/i?t=yarn%20add%20fetch-paginate)](https://copyhaste.com/c?t=yarn%20add%20fetch-paginate 'yarn add fetch-paginate (copy)')
 
 ## Example
 
@@ -25,14 +25,13 @@ or:
 import 'isomorphic-fetch'
 import fetchPaginate from 'fetch-paginate'
 
-fetchPaginate('https://api.example.com/foo')
-  .then(({ res, data }) => {
-    console.log({ res, data })
-  })
+fetchPaginate('https://api.example.com/foo').then(({ res, data }) => {
+  console.log({ res, data })
+})
 ```
 
 ```js
-fetchPaginate(url, options = {})
+fetchPaginate(url, (options = {}))
 ```
 
 ## Options
@@ -56,7 +55,7 @@ An optional function specifying how to merge a page of results with previous. Re
 Defaults to concatenate arrays, assuming `items` option is correct:
 
 ```js
-(acc, data) => [...acc, ...items(data)]
+;(acc, data) => [...acc, ...items(data)]
 ```
 
 ### `parse`
@@ -66,15 +65,15 @@ An optional function specifying how to parse responses. Return a promise.
 Defaults to parse JSON:
 
 ```js
-res => res.ok && res.status !== 204 ? res.json() : res.text()
+res => (res.ok && res.status !== 204 ? res.json() : res.text())
 ```
 
 ### `until`
 
-An optional function specifying when to stop paginating. Receives parsed data and whole response object. Return `true` to stop paginating.
+An optional function specifying when to stop paginating. Receives parsed data and whole response object. Return `true` to stop paginating, or a promise that resolves as such.
 
 Defaults to always return `false` - to continue to consume until all pages:
 
 ```js
-(data, res) => false
+;(data, res) => false
 ```
