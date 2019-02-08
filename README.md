@@ -59,7 +59,7 @@ An optional function specifying how to merge a page of results with previous. Re
 Defaults to concatenate arrays, assuming `items` option is correct:
 
 ```js
-;(page, data) => [...items(page), ...(data || [])]
+(page, data) => [...items(page), ...(data || [])]
 ```
 
 ### `parse`
