@@ -79,5 +79,5 @@ An optional function specifying when to stop paginating. Receives parsed data an
 Defaults to always return `false` - to continue to consume until all pages:
 
 ```js
-;(data, res) => false
+(data, res) => false
 ```
