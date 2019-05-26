@@ -172,7 +172,9 @@ const fetchPaginate = async (url, options = {}) => {
       throw error;
     }
 
-    if (!res.ok) break;
+    if (!res.ok) {
+      throw new Error(`failed page call ${calls}`);
+    }
 
     pageBody = await parse(res);
 
