@@ -114,12 +114,6 @@ const defaultNext = ({
   if (nextFromLinkHeader) return nextFromLinkHeader;
 };
 
-const getNextPage = async (url, options) => {
-  const { fetchOptions } = options;
-
-  return await fetch(url, fetchOptions);
-};
-
 const fetchPaginate = async (url, options = {}) => {
   const {
     params,
@@ -167,10 +161,7 @@ const fetchPaginate = async (url, options = {}) => {
     page = nextMeta.page || page;
 
     try {
-      res = await getNextPage(nextUrl, {
-        parse,
-        fetchOptions
-      });
+      res = await fetch(nextUrl, fetchOptions);
 
       calls++;
     } catch (error) {
