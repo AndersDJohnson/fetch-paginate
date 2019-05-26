@@ -5,6 +5,9 @@
   "main": "dist/main.js",
   "license": "MIT",
   "repository": "AndersDJohnson/fetch-paginate",
+  "jest": {
+    "testURL": "http://localhost/"
+  },
   "scripts": {
     "test": "jest",
     "build": "webpack"
