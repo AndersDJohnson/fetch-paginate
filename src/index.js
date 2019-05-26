@@ -1,142 +1,204 @@
-import parseLinkHeader from 'parse-link-header'
+import parseLinkHeader from "parse-link-header";
 
-const defaultItems = data => data
-const defaultMerge = ({ items }) => (pageData, nextData) => [...items(pageData), ...(nextData || [])]
-const defaultParse = res => (res.ok && res.status !== 204 ? res.json() : res.text())
+const defaultItems = data => data;
+const defaultMerge = setOfSetsOfItems =>
+  setOfSetsOfItems.reduce((acc, v) => [...acc, ...v], []);
+const defaultParse = res =>
+  res.ok && res.status !== 204 ? res.json() : res.text();
 
-const getNextFromLinkHeader = res => {
-  if (!res.headers) return
+const getNextFromLinkHeader = ({ res, url, isFirst }) => {
+  if (isFirst)
+    return {
+      url
+    };
 
-  const link = res.headers.get('link') || res.headers.get('Link')
+  if (!res || !res.headers) return;
 
-  if (!link) return
-  
-  const { next } = parseLinkHeader(link) || {}
+  const link = res.headers.get("link") || res.headers.get("Link");
 
-  if (!next) return
+  if (!link) return;
+
+  const { next } = parseLinkHeader(link) || {};
+
+  if (!next) return;
 
   return {
     url: next.url
-  }
-}
+  };
+};
 
-const getNextWithParams = async ({ params, pageData, url, page, limit, offset }) => {
-  if (!params) return
+const getNextWithParams = ({
+  params,
+  pageItems,
+  url,
+  firstPage,
+  firstOffset,
+  page,
+  limit,
+  offset,
+  isFirst
+}) => {
+  if (!params) return;
 
-  const parsedUrl = new URL(url)
+  const parsedUrl = new URL(url);
 
-  if (!pageData || !pageData.length) return
+  if (!isFirst && (!pageItems || !pageItems.length)) return;
 
   if (params.offset) {
-    const offsetParam = (params.offset === true ? undefined : params.offset) || 'offset'
+    const nextLimit = limit || (pageItems && pageItems.length);
 
-    const nextLimit = limit || (pageData && pageData.length) || 10
+    const nextOffset = isFirst ? offset : offset + nextLimit;
 
-    const nextOffset = offset + nextLimit
+    const offsetParam =
+      (params.offset === true ? undefined : params.offset) || "offset";
 
-    parsedUrl.searchParams.set(params.limit || 'limit', nextLimit)
-    parsedUrl.searchParams.set(offsetParam, nextOffset)
+    if (nextOffset !== firstOffset) {
+      parsedUrl.searchParams.set(offsetParam, nextOffset);
+    }
+
+    if (nextLimit) {
+      parsedUrl.searchParams.set(params.limit || "limit", nextLimit);
+    }
 
     return {
       url: parsedUrl.toString(),
       limit: nextLimit,
       offset: nextOffset
-    }
+    };
   } else {
-    const nextPage = page + 1
+    const nextPage = isFirst ? page : page + 1;
 
-    parsedUrl.searchParams.set(params.page || 'page', nextPage)
+    if (nextPage !== firstPage) {
+      parsedUrl.searchParams.set(params.page || "page", nextPage);
+    }
 
     return {
       url: parsedUrl.toString(),
       page: nextPage
-    }
+    };
   }
-}
+};
 
-const defaultNext = ({ params }) => ({ url, options, res, pageData, page, limit, offset }) => {
-  const nextFromLinkHeader = getNextFromLinkHeader(res)
+const defaultNext = ({
+  url,
+  res,
+  pageItems,
+  firstPage,
+  firstOffset,
+  page,
+  limit,
+  offset,
+  params,
+  isFirst
+}) => {
+  const nextWithParams = getNextWithParams({
+    url,
+    pageItems,
+    page,
+    firstPage,
+    firstOffset,
+    limit,
+    offset,
+    params,
+    isFirst
+  });
 
-  if (nextFromLinkHeader) return nextFromLinkHeader
+  if (nextWithParams) return nextWithParams;
 
-  const nextWithParams = getNextWithParams(({ params, pageData, url, page, limit, offset }))
+  const nextFromLinkHeader = getNextFromLinkHeader({
+    res,
+    url,
+    isFirst
+  });
 
-  if (nextWithParams) return nextWithParams
-}
+  if (nextFromLinkHeader) return nextFromLinkHeader;
+};
 
-const fetchPaginate = async (url, options = {}, { ongoingData, calls = 0 } = {}) => {
+const getNextPage = async (url, options) => {
+  const { fetchOptions } = options;
+
+  return await fetch(url, fetchOptions);
+};
+
+const fetchPaginate = async (url, options = {}) => {
   const {
-    paginate = true,
     params,
     items = defaultItems,
-    merge = defaultMerge({ items }),
+    merge = defaultMerge,
     parse = defaultParse,
-    next = defaultNext({ params, items, parse }),
+    next = defaultNext,
     until,
-    limit,
     firstOffset = 0,
-    offset = firstOffset,
     firstPage = 1,
-    page = firstPage,
-    ...rest
-  } = options
+    options: fetchOptions
+  } = options;
 
-  const res = await fetch(url, rest)
+  let { limit, offset = firstOffset, page = firstPage } = options;
 
-  const pageData = await parse(res)
+  let pages = [];
 
-  const nextOngoingData = merge(pageData, ongoingData)
-  const untilOngoingData = Array.isArray(nextOngoingData)
-    ? nextOngoingData.reverse()
-    : untilOngoingData
+  let calls = 0;
 
-  const untilResult = until && until(pageData, untilOngoingData, res)
-  const hitUntil = await untilResult
+  let pageBody;
 
-  if (res.ok && paginate && !hitUntil) {
-    const nextMeta = await next({ url, options, res, pageData, limit, offset, page })
+  let res;
+  let nextUrl = url;
 
-    if (nextMeta) {
-      const { url: nextUrl, limit, offset, page } = nextMeta
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const nextMeta = await next({
+      url: nextUrl,
+      res,
+      pageItems,
+      firstPage,
+      firstOffset,
+      limit,
+      offset,
+      page,
+      params,
+      isFirst: calls === 0
+    });
 
-      try {
-        const { data: nextData } = await fetchPaginate(
-          nextUrl,
-          {
-            ...options,
-            limit,
-            offset,
-            page,
-          },
-          {
-            ongoingData: nextOngoingData,
-            calls: calls + 1
-          }
-        )
+    if (!nextMeta) break;
 
-        const finalData = merge(pageData, nextData)
+    nextUrl = nextMeta.url || url;
+    limit = nextMeta.limit || limit;
+    offset = nextMeta.offset || offset;
+    page = nextMeta.page || page;
 
-        return {
-          res,
-          data: finalData
-        }
-      } catch (error) {
-        if (res.status === 404 && calls > 0) {
-          return {
-            res,
-            data: pageData
-          }
-        }
+    try {
+      res = await getNextPage(nextUrl, {
+        parse,
+        fetchOptions
+      });
 
-        throw error
+      calls++;
+    } catch (error) {
+      if (res && res.status === 404 && calls > 0) {
+        break;
       }
+
+      throw error;
     }
+
+    if (!res.ok) break;
+
+    pageBody = await parse(res);
+
+    if (!pageBody) break;
+
+    pages.push(pageBody);
+
+    const pageItems = items(pageBody);
+
+    if (until && (await until({ page: pageBody, pages }))) break;
   }
+
+  const data = calls > 1 ? merge(pages.map(page => items(page))) : pageBody;
 
   return {
-    res,
-    data: items(pageData)
-  }
-}
+    data
+  };
+};
 
-export default fetchPaginate
+export default fetchPaginate;
