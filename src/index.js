@@ -172,7 +172,12 @@ const fetchPaginate = async (url, options = {}) => {
       throw error;
     }
 
-    if (!res.ok) {
+    // end of pages, hopefully
+    if (res && res.status === 404 && calls > 0) {
+      break;
+    }
+
+    if (res && res.status >= 400) {
       throw new Error(`failed page call ${calls}`);
     }
 
