@@ -130,6 +130,7 @@ const fetchPaginate = async (url, options = {}) => {
   let { limit, offset = firstOffset, page = firstPage } = options;
 
   let pages = [];
+  let pageItems;
 
   let calls = 0;
 
@@ -187,7 +188,7 @@ const fetchPaginate = async (url, options = {}) => {
 
     pages.push(pageBody);
 
-    const pageItems = items(pageBody);
+    pageItems = items(pageBody);
 
     if (until && (await until({ page: pageBody, pages }))) break;
   }
