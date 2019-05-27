@@ -13,6 +13,22 @@ Isomorphic - works in Node and browser - if used with `isomorphic-fetch`.
 Requires a `fetch` polyfill for environments that don't support that.
 Recommended is `isomorphic-fetch` or `node-fetch` or `whatwg-fetch`.
 
+For bundled/browser use `fetch-paginate/bundle` (which includes dependencies, except `fetch`):
+
+```js
+import "isomorphic-fetch";
+import fetchPaginate from "fetch-paginate/bundle";
+```
+
+or even with the UMD global (on `window`):
+
+```js
+import "isomorphic-fetch";
+import "fetch-paginate/bundle";
+
+fetchPaginate("https://api.example.com/foo");
+```
+
 ## Install
 
 [![npm install fetch-paginate (copy)](https://copyhaste.com/i?t=npm%20install%20fetch-paginate)](https://copyhaste.com/c?t=npm%20install%20fetch-paginate "npm install fetch-paginate (copy)")
@@ -27,9 +43,9 @@ or:
 import "isomorphic-fetch";
 import fetchPaginate from "fetch-paginate";
 
-fetchPaginate("https://api.example.com/foo").then(({ res, data }) => {
-  console.log({ res, data });
-});
+const { data } = await fetchPaginate("https://api.example.com/foo");
+
+console.log(data);
 ```
 
 ```js
