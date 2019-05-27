@@ -44,7 +44,7 @@ const getNextWithParams = ({
 
   if (!isFirst && (!pageItems || !pageItems.length)) return;
 
-  if (params.offset) {
+  if (params.offset || params.limit) {
     const nextLimit = limit || (pageItems && pageItems.length);
 
     const nextOffset = isFirst ? offset : offset + nextLimit;
