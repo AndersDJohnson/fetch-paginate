@@ -113,9 +113,11 @@ Defaults to `"page"`.
 
 ### `params.limit`
 
-`String`
+`Boolean | Object`
 
 The name of the query parameter to use for limit per page.
+
+If `limit: true`, it will indicate to use `limit` and `offset` instead of `page`, but use default names.
 
 Defaults to `"limit"`.
 
@@ -124,6 +126,8 @@ Defaults to `"limit"`.
 `String | Boolean`
 
 The name of the query parameter to use for page offset.
+
+If `offset: true`, it will indicate to use `limit` and `offset` instead of `page`, but use default names.
 
 Defaults to `"offset"`.
 

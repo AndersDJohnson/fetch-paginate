@@ -49,6 +49,9 @@ const getNextWithParams = ({
 
     const nextOffset = isFirst ? offset : offset + nextLimit;
 
+    const limitParam =
+      (params.limit === true ? undefined : params.limit) || "limit";
+
     const offsetParam =
       (params.offset === true ? undefined : params.offset) || "offset";
 
@@ -57,7 +60,7 @@ const getNextWithParams = ({
     }
 
     if (nextLimit) {
-      parsedUrl.searchParams.set(params.limit || "limit", nextLimit);
+      parsedUrl.searchParams.set(limitParam, nextLimit);
     }
 
     return {
