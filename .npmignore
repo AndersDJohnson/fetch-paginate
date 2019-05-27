@@ -1,5 +1,8 @@
 *.test.js
 
+.*
+*.config.*js
+
 src
 
 coverage
