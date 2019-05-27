@@ -4,7 +4,9 @@ export default [
   {
     mode: "production",
     output: {
-      filename: "[name].bundle.js",
+      path: process.cwd(),
+      filename: "bundle.js",
+      library: "fetchPaginate",
       libraryTarget: "umd"
     },
     module: {

@@ -1,4 +1,6 @@
 dist
+bundle.js
+index.html
 
 coverage
 

@@ -1,4 +1,6 @@
 *.test.js
+bundle.js
+index.html
 
 .*
 *.config.*js
