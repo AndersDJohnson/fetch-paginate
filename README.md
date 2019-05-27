@@ -2,9 +2,11 @@
 
 [![npm](https://img.shields.io/npm/v/fetch-paginate.svg)](https://www.npmjs.com/package/fetch-paginate)
 
-Get multiple pages of results from a paginated API with the Link header via the Fetch API.
+Get multiple pages of results from paginated APIs with `fetch`,
+using either `Link` headers like GitHub,
+or with `page` or `offset` & `limit` query parameters.
 
-Resolves with the last response object as `res` and the merged `data` object.
+Resolves with the merged `data` object.
 
 Isomorphic - works in Node and browser - if used with `isomorphic-fetch`.
 
