@@ -182,7 +182,9 @@ const fetchPaginate = async (url, options = {}) => {
     }
 
     if (res && res.status >= 400) {
-      throw new Error(`failed page call ${calls}`);
+      throw new Error(
+        `failed page call ${calls}, status ${res.status} ${res.statusText}`
+      );
     }
 
     pageBody = await parse(res);
