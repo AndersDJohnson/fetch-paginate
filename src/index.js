@@ -201,7 +201,8 @@ const fetchPaginate = async (url, options = {}) => {
   const data = calls > 1 ? merge(pages.map(page => items(page))) : pageBody;
 
   return {
-    data
+    data,
+    res
   };
 };
 

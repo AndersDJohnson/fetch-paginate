@@ -12,6 +12,7 @@ const offsetEmptyEndUrl = `${base}/offset-empty-end`;
 
 nock(base)
   .get("/one")
+  .times(Infinity)
   .reply(200, '"one"');
 
 nock(base)
@@ -130,7 +131,20 @@ describe("index", () => {
     });
   });
 
+  it("should return res for non-paginated requests", () => {
+    return fetchPaginate("http://api.example.com/one").then(({ res }) => {
+      expect(res).toBeDefined();
+    });
+  });
+
   describe("Link header", () => {
+    it("should return last res when paginated", () => {
+      return fetchPaginate(linkedUrl).then(({ res }) => {
+        expect(res).toBeDefined();
+        expect(res.headers.get('link')).toEqual('<http://api.example.com/linked?page=3>; rel="last"')
+      });
+    });
+
     it("should paginate", () => {
       return fetchPaginate(linkedUrl).then(({ data }) => {
         expect(data).toEqual(["one", "two", "three"]);
