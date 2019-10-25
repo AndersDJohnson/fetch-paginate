@@ -43,9 +43,12 @@ or:
 import "isomorphic-fetch";
 import fetchPaginate from "fetch-paginate";
 
-const { data } = await fetchPaginate("https://api.example.com/foo");
+const { data, res } = await fetchPaginate("https://api.example.com/foo");
 
 console.log(data);
+
+// `res` is the response for the last call made
+console.log(res);
 ```
 
 ```js
