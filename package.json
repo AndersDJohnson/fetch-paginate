@@ -23,7 +23,6 @@
     "@babel/plugin-transform-runtime": "^7.6.2",
     "@babel/polyfill": "^7.6.0",
     "@babel/preset-env": "^7.6.3",
-    "@babel/runtime": "^7.6.3",
     "babel-loader": "^8.0.6",
     "eslint": "^5.16.0",
     "isomorphic-fetch": "^2.2.1",
@@ -34,6 +33,7 @@
     "webpack-node-externals": "^1.7.2"
   },
   "dependencies": {
+    "@babel/runtime": "^7.6.3",
     "core-js": "^3.3.3",
     "parse-link-header": "^1.0.1"
   }
