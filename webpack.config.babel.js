@@ -3,6 +3,7 @@ import nodeExternals from "webpack-node-externals";
 export default [
   {
     mode: "production",
+    entry: './src/index.ts',
     output: {
       path: process.cwd(),
       filename: "bundle.js",
@@ -12,7 +13,7 @@ export default [
     module: {
       rules: [
         {
-          test: /.js$/,
+          test: /.ts$/,
           exclude: /node_modules/,
           use: ["babel-loader"]
         }
@@ -21,6 +22,7 @@ export default [
   },
   {
     mode: "production",
+    entry: './src/index.ts',
     externals: nodeExternals(),
     output: {
       libraryTarget: "commonjs2"
@@ -28,7 +30,7 @@ export default [
     module: {
       rules: [
         {
-          test: /.js$/,
+          test: /.ts$/,
           exclude: /node_modules/,
           use: ["babel-loader"]
         }
