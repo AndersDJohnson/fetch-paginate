@@ -5,9 +5,6 @@
   "main": "dist/main.js",
   "license": "MIT",
   "repository": "AndersDJohnson/fetch-paginate",
-  "jest": {
-    "testURL": "http://localhost/"
-  },
   "browserslist": [
     "> .5%",
     "last 2 versions"
@@ -23,11 +20,18 @@
     "@babel/plugin-transform-runtime": "^7.6.2",
     "@babel/polyfill": "^7.6.0",
     "@babel/preset-env": "^7.6.3",
+    "@babel/preset-typescript": "^7.8.3",
+    "@sindresorhus/tsconfig": "^0.7.0",
+    "@types/jest": "^25.1.4",
+    "@types/nock": "^11.1.0",
+    "@types/parse-link-header": "^1.0.0",
     "babel-loader": "^8.0.6",
     "eslint": "^5.16.0",
     "isomorphic-fetch": "^2.2.1",
     "jest": "^24.9.0",
-    "nock": "^9.6.1",
+    "nock": "^12.0.2",
+    "ts-jest": "^25.2.1",
+    "typescript": "^3.8.3",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9",
     "webpack-node-externals": "^1.7.2"
