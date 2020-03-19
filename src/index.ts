@@ -269,7 +269,7 @@ const fetchPaginate = async <$Body , Item>($url: URL | string, options: FetchPag
     if (until && (await until({ page: pageBody, pages }))) break;
   }
 
-  const data = calls> 1 ? merge(pages.map(page => items(page))) : pageBody;
+  const data = calls> 1 ? merge(pages.map(page => items(page))) : pageItems;
 
   return {
     data,
