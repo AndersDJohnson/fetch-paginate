@@ -2,11 +2,21 @@
 
 [![npm](https://img.shields.io/npm/v/fetch-paginate.svg)](https://www.npmjs.com/package/fetch-paginate)
 
+> Get multiple pages of results from paginated APIs with `fetch`.
+
+[![npm install fetch-paginate (copy)](https://copyhaste.com/i?t=npm%20install%20fetch-paginate)](https://copyhaste.com/c?t=npm%20install%20fetch-paginate "npm install fetch-paginate (copy)")
+
+or:
+
+[![yarn add fetch-paginate (copy)](https://copyhaste.com/i?t=yarn%20add%20fetch-paginate)](https://copyhaste.com/c?t=yarn%20add%20fetch-paginate "yarn add fetch-paginate (copy)")
+
+Supports TypeScript.
+
 Get multiple pages of results from paginated APIs with `fetch`,
 using either `Link` headers like GitHub,
 or with `page` or `offset` & `limit` query parameters.
 
-Resolves with the merged `data` object.
+Resolves with the merged `items` object.
 
 Isomorphic - works in Node and browser - if used with `isomorphic-fetch`.
 
@@ -26,29 +36,32 @@ or even with the UMD global (on `window`):
 import "isomorphic-fetch";
 import "fetch-paginate/bundle";
 
-fetchPaginate("https://api.example.com/foo");
+const { items } = await fetchPaginate("https://api.example.com/foo");
 ```
 
-## Install
+Now `items` will be an array of items across all pages (unless you define a custom `merge`).
 
-[![npm install fetch-paginate (copy)](https://copyhaste.com/i?t=npm%20install%20fetch-paginate)](https://copyhaste.com/c?t=npm%20install%20fetch-paginate "npm install fetch-paginate (copy)")
-
-or:
-
-[![yarn add fetch-paginate (copy)](https://copyhaste.com/i?t=yarn%20add%20fetch-paginate)](https://copyhaste.com/c?t=yarn%20add%20fetch-paginate "yarn add fetch-paginate (copy)")
-
-## Example
+If the the API returns your results in a nested response, use a custom `getItems` function to select them:
 
 ```js
-import "isomorphic-fetch";
-import fetchPaginate from "fetch-paginate";
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  getItems: body => body.results
+});
+```
 
-const { data, res } = await fetchPaginate("https://api.example.com/foo");
+If you need access to all the page bodies or response objects, use:
 
-console.log(data);
+```js
+const { pages, responses } = await fetchPaginate("https://api.example.com/foo");
+```
 
-// `res` is the response for the last call made
-console.log(res);
+You can also specify the types of your objects with generics:
+
+```
+const { items, pages } = await fetchPaginate<MyBody, MyItem>("https://api.example.com/foo");
+
+// Now `items` has type `MyItem[]`,
+//  `pages` has type `MyBody[]`.
 ```
 
 ```js
@@ -57,20 +70,20 @@ fetchPaginate(url, options);
 
 ## Options
 
-### `items`
+### `getItems`
 
-An optional function specifying how to get items list from a page of response data.
+An optional function specifying how to get items list from a page of response body.
 
 Defaults to identity:
 
 ```js
-data => data;
+body => body;
 ```
 
 ### `merge`
 
 An optional function specifying how to merge pages of items.
-Receives an array of arrays of items from each page (from `items(await parse(res))` for each page).
+Receives an array of arrays of items from each page (from `getItems(await parse(response))` for each page).
 
 Defaults to flatten arrays:
 
@@ -85,17 +98,17 @@ An optional function specifying how to parse responses. Return a promise.
 Defaults to parse JSON:
 
 ```js
-res => (res.ok && res.status !== 204 ? res.json() : res.text());
+response => (response.ok && response.status !== 204 ? response.json() : response.text());
 ```
 
 ### `until`
 
-An optional function specifying when to stop paginating. Receives parsed data and whole response object. Return `true` to stop paginating, or a promise that resolves as such.
+An optional function specifying when to stop paginating. Receives parsed body and whole response object. Return `true` to stop paginating, or a promise that resolves as such.
 
 Defaults to always return `false` - to continue to consume until all pages:
 
 ```js
-({ page, pages }) => false;
+({ page, pages, response, responses, items, pageItems }) => false;
 ```
 
 ### `params`

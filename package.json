@@ -3,6 +3,7 @@
   "description": "Get multiple pages from paginated APIs with fetch.",
   "version": "5.0.0",
   "main": "dist/main.js",
+  "types": "dist/index.d.ts",
   "license": "MIT",
   "repository": "AndersDJohnson/fetch-paginate",
   "browserslist": [
@@ -29,7 +30,7 @@
     "babel-loader": "^8.0.6",
     "eslint": "^5.16.0",
     "isomorphic-fetch": "^2.2.1",
-    "jest": "^24.9.0",
+    "jest": "^25.1.0",
     "nock": "^12.0.2",
     "ts-jest": "^25.2.1",
     "typescript": "^3.8.3",
