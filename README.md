@@ -23,19 +23,9 @@ Isomorphic - works in Node and browser - if used with `isomorphic-fetch`.
 Requires a `fetch` polyfill for environments that don't support that.
 Recommended is `isomorphic-fetch` or `node-fetch` or `whatwg-fetch`.
 
-For bundled/browser use `fetch-paginate/bundle` (which includes dependencies, except `fetch`):
+## Usage
 
 ```js
-import "isomorphic-fetch";
-import fetchPaginate from "fetch-paginate/bundle";
-```
-
-or even with the UMD global (on `window`):
-
-```js
-import "isomorphic-fetch";
-import "fetch-paginate/bundle";
-
 const { items } = await fetchPaginate("https://api.example.com/foo");
 ```
 
@@ -57,15 +47,33 @@ const { pages, responses } = await fetchPaginate("https://api.example.com/foo");
 
 You can also specify the types of your objects with generics:
 
-```
+```js
 const { items, pages } = await fetchPaginate<MyBody, MyItem>("https://api.example.com/foo");
 
 // Now `items` has type `MyItem[]`,
-//  `pages` has type `MyBody[]`.
+// and `pages` has type `MyBody[]`.
 ```
 
 ```js
 fetchPaginate(url, options);
+```
+
+### Browser
+
+For bundled/browser use `fetch-paginate/bundle` (which includes dependencies, except `fetch`):
+
+```js
+import "isomorphic-fetch";
+import fetchPaginate from "fetch-paginate/bundle";
+```
+
+or even with the UMD global (on `window`):
+
+```js
+import "isomorphic-fetch";
+import "fetch-paginate/bundle";
+
+const { items } = await fetchPaginate("https://api.example.com/foo");
 ```
 
 ## Options
