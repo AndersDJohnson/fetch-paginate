@@ -44,7 +44,7 @@ export type FetchPaginateParseFunction<$Body> = (response: Response) => Promise<
 export type FetchPaginateNextFunction<Item> = (nextOptions: FetchPaginateNextOptions<Item>) => FetchPaginateNext;
 
 export interface FetchPaginateOptions<$Body , Item> {
-  options?: ResponseInit;
+  fetchOptions?: ResponseInit;
   until?: FetchPaginateUntilFunction<$Body, Item>;
   getItems?: FetchPaginateItemsFunction<$Body, Item>;
   merge?: FetchPaginateMergeFunction<Item>;
@@ -200,7 +200,7 @@ const fetchPaginate = async <$Body, Item>($url: URL | string, options: FetchPagi
     until,
     firstOffset = 0,
     firstPage = 1,
-    options: fetchOptions
+    fetchOptions
   } = options;
 
   const url = typeof $url === 'string' ? $url : $url.toString();

@@ -113,7 +113,7 @@ Defaults to always return `false` - to continue to consume until all pages:
 
 ### `params`
 
-`Boolean | Object`
+`boolean | ParamsObject`
 
 Optionally use these if the API paginates with query parameters (either `page`, or `limit` and `offset`), rather than `Link` headers.
 
@@ -121,7 +121,7 @@ If you pass `params: true`, it will use `page` as the default, instead of `limit
 
 ### `params.page`
 
-`String`
+`string`
 
 The name of the query parameter to use for pages.
 
@@ -129,7 +129,7 @@ Defaults to `"page"`.
 
 ### `params.limit`
 
-`Boolean | Object`
+`string | boolean`
 
 The name of the query parameter to use for limit per page.
 
@@ -139,7 +139,7 @@ Defaults to `"limit"`.
 
 ### `params.offset`
 
-`String | Boolean`
+`string | boolean`
 
 The name of the query parameter to use for page offset.
 
@@ -147,25 +147,9 @@ If `offset: true`, it will indicate to use `limit` and `offset` instead of `page
 
 Defaults to `"offset"`.
 
-### `firstPage`
-
-`Number`
-
-The first page index.
-
-Defaults to `1`.
-
-### `firstOffset`
-
-`Number`
-
-The first offset index.
-
-Defaults to `0`.
-
 ### `page`
 
-`Number`
+`number`
 
 If using `params` with `page`, this indicates the page at which to start fetching.
 
@@ -173,7 +157,7 @@ Defaults to value of `firstPage`.
 
 ### `offset`
 
-`Number`
+`number`
 
 If using `params` with `offset` and `limit`, this indicates the offset at which to start fetching.
 
@@ -181,14 +165,30 @@ Defaults to value of `firstOffset`.
 
 ### `limit`
 
-`Number`
+`number`
 
 If using `params` with `offset` and `limit`, this indicates the size of each page.
 
 Defaults to the size of the first page fetched.
 
-### `options`
+### `firstPage`
 
-`Object`
+`number`
+
+The first page index.
+
+Defaults to `1`.
+
+### `firstOffset`
+
+`number`
+
+The first offset index.
+
+Defaults to `0`.
+
+### `fetchOptions`
+
+`ResponseInit` (`Object`)
 
 Additional options to pass to `fetch`.
