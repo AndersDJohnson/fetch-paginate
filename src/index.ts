@@ -37,13 +37,21 @@ interface FetchPaginateNext {
   page?: number;
 }
 
-export type FetchPaginateUntilFunction<$Body, Item> = (untilOptions: FetchPaginateUntilOptions<$Body, Item>) => Promise<boolean> | boolean;
-export type FetchPaginateItemsFunction<$Body , Item> = (body: $Body) => Item[];
-export type FetchPaginateMergeFunction<Item> = (setOfSetsOfItems: (Item[] | undefined)[]) => Item[];
-export type FetchPaginateParseFunction<$Body> = (response: Response) => Promise<$Body> | $Body;
-export type FetchPaginateNextFunction<Item> = (nextOptions: FetchPaginateNextOptions<Item>) => FetchPaginateNext;
+export type FetchPaginateUntilFunction<$Body, Item> = (
+  untilOptions: FetchPaginateUntilOptions<$Body, Item>
+) => Promise<boolean> | boolean;
+export type FetchPaginateItemsFunction<$Body, Item> = (body: $Body) => Item[];
+export type FetchPaginateMergeFunction<Item> = (
+  setOfSetsOfItems: (Item[] | undefined)[]
+) => Item[];
+export type FetchPaginateParseFunction<$Body> = (
+  response: Response
+) => Promise<$Body> | $Body;
+export type FetchPaginateNextFunction<Item> = (
+  nextOptions: FetchPaginateNextOptions<Item>
+) => FetchPaginateNext;
 
-export interface FetchPaginateOptions<$Body , Item> {
+export interface FetchPaginateOptions<$Body, Item> {
   fetchOptions?: ResponseInit;
   until?: FetchPaginateUntilFunction<$Body, Item>;
   getItems?: FetchPaginateItemsFunction<$Body, Item>;
@@ -59,18 +67,29 @@ export interface FetchPaginateOptions<$Body , Item> {
 }
 
 // @ts-ignore
-const defaultGetItems = <$Body , Item>(data: $Body ): Item[] | undefined => data;
+const defaultGetItems = <$Body, Item>(data: $Body): Item[] | undefined => data;
 
 const defaultMerge = <Item>(setOfSetsOfItems: (Item[] | undefined)[]): Item[] =>
-  setOfSetsOfItems.reduce((acc: Item[], v?: Item[]) => [...acc, ...(v ?? [])], []);
+  setOfSetsOfItems.reduce(
+    (acc: Item[], v?: Item[]) => [...acc, ...(v ?? [])],
+    []
+  );
 
 const defaultParse = <$Body>(response: Response): Promise<$Body> =>
   response.ok && response.status !== 204 ? response.json() : response.text();
 
-const getNextFromLinkHeader = ({ response, url, isFirst }: { response?: Response, url: string, isFirst: boolean }): { url: string } | void => {
+const getNextFromLinkHeader = ({
+  response,
+  url,
+  isFirst,
+}: {
+  response?: Response;
+  url: string;
+  isFirst: boolean;
+}): { url: string } | void => {
   if (isFirst)
     return {
-      url
+      url,
     };
 
   if (!response || !response.headers) return;
@@ -84,7 +103,7 @@ const getNextFromLinkHeader = ({ response, url, isFirst }: { response?: Response
   if (!next) return;
 
   return {
-    url: next.url
+    url: next.url,
   };
 };
 
@@ -97,7 +116,7 @@ const getNextWithParams = <Item>({
   page,
   limit,
   offset,
-  isFirst
+  isFirst,
 }: {
   params?: Params;
   pageItems: Item[];
@@ -115,7 +134,7 @@ const getNextWithParams = <Item>({
 
   if (!isFirst && !pageItems?.length) return;
 
-  if (typeof params !== 'boolean' && (params.offset || params.limit)) {
+  if (typeof params !== "boolean" && (params.offset || params.limit)) {
     const nextLimit = limit ?? pageItems?.length;
 
     if (!nextLimit) return;
@@ -139,18 +158,21 @@ const getNextWithParams = <Item>({
     return {
       url: parsedUrl.toString(),
       limit: nextLimit,
-      offset: nextOffset
+      offset: nextOffset,
     };
   } else {
     const nextPage = isFirst ? page : page + 1;
 
     if (nextPage !== firstPage) {
-      parsedUrl.searchParams.set(typeof params === 'boolean' && params ? 'page' : params.page || 'page', nextPage.toString());
+      parsedUrl.searchParams.set(
+        typeof params === "boolean" && params ? "page" : params.page || "page",
+        nextPage.toString()
+      );
     }
 
     return {
       url: parsedUrl.toString(),
-      page: nextPage
+      page: nextPage,
     };
   }
 };
@@ -165,7 +187,7 @@ const defaultNext = <Item>({
   limit,
   offset,
   params,
-  isFirst
+  isFirst,
 }: FetchPaginateNextOptions<Item>): FetchPaginateNext | void => {
   const nextWithParams = getNextWithParams({
     url,
@@ -176,7 +198,7 @@ const defaultNext = <Item>({
     limit,
     offset,
     params,
-    isFirst
+    isFirst,
   });
 
   if (nextWithParams) return nextWithParams;
@@ -184,13 +206,16 @@ const defaultNext = <Item>({
   const nextFromLinkHeader = getNextFromLinkHeader({
     response,
     url,
-    isFirst
+    isFirst,
   });
 
   if (nextFromLinkHeader) return nextFromLinkHeader;
 };
 
-const fetchPaginate = async <$Body, Item>($url: URL | string, options: FetchPaginateOptions<$Body, Item> = {}) => {
+const fetchPaginate = async <$Body, Item>(
+  $url: URL | string,
+  options: FetchPaginateOptions<$Body, Item> = {}
+) => {
   const {
     params,
     getItems = defaultGetItems,
@@ -200,10 +225,10 @@ const fetchPaginate = async <$Body, Item>($url: URL | string, options: FetchPagi
     until,
     firstOffset = 0,
     firstPage = 1,
-    fetchOptions
+    fetchOptions,
   } = options;
 
-  const url = typeof $url === 'string' ? $url : $url.toString();
+  const url = typeof $url === "string" ? $url : $url.toString();
 
   let { limit, offset = firstOffset, page = firstPage } = options;
 
@@ -231,7 +256,7 @@ const fetchPaginate = async <$Body, Item>($url: URL | string, options: FetchPagi
       offset,
       page,
       params,
-      isFirst: count === 0
+      isFirst: count === 0,
     });
 
     if (!nextMeta) break;
@@ -248,7 +273,7 @@ const fetchPaginate = async <$Body, Item>($url: URL | string, options: FetchPagi
 
       count++;
     } catch (error) {
-      if (response && response.status === 404 && count> 0) {
+      if (response && response.status === 404 && count > 0) {
         break;
       }
 
@@ -260,7 +285,7 @@ const fetchPaginate = async <$Body, Item>($url: URL | string, options: FetchPagi
       break;
     }
 
-    if (response && response.status>= 400) {
+    if (response && response.status >= 400) {
       throw new Error(
         `failed page call ${count}, status ${response.status} ${response.statusText}`
       );
@@ -274,22 +299,26 @@ const fetchPaginate = async <$Body, Item>($url: URL | string, options: FetchPagi
 
     pageItems = getItems<$Body, Item>(pageBody) ?? [];
 
-    items = merge(pages.map(page => getItems(page)));
+    items = merge(pages.map((page) => getItems(page)));
 
-    if (until && (await until({
-      page: pageBody,
-      pages,
-      response,
-      responses,
-      pageItems,
-      items
-    }))) break;
+    if (
+      until &&
+      (await until({
+        page: pageBody,
+        pages,
+        response,
+        responses,
+        pageItems,
+        items,
+      }))
+    )
+      break;
   }
 
   return {
     items,
     pages,
-    responses
+    responses,
   };
 };
 

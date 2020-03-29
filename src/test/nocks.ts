@@ -1,11 +1,8 @@
-import nock from 'nock';
+import nock from "nock";
 
 export const base = "http://api.example.com";
 
-nock(base)
-  .get("/one")
-  .times(Infinity)
-  .reply(200, '{ "list": ["one"] }');
+nock(base).get("/one").times(Infinity).reply(200, '{ "list": ["one"] }');
 
 nock(base)
   .get("/linked")
@@ -13,7 +10,7 @@ nock(base)
   .reply(200, '{ "list": ["one"] }', {
     Link:
       '<http://api.example.com/linked?page=2>; rel="next", ' +
-      '<http://api.example.com/linked?page=3>; rel="last"'
+      '<http://api.example.com/linked?page=3>; rel="last"',
   })
   .get("/linked")
   .times(Infinity)
@@ -21,13 +18,13 @@ nock(base)
   .reply(200, '{ "list": ["two"] }', {
     Link:
       '<http://api.example.com/linked?page=3>; rel="next", ' +
-      '<http://api.example.com/linked?page=3>; rel="last"'
+      '<http://api.example.com/linked?page=3>; rel="last"',
   })
   .get("/linked")
   .times(Infinity)
   .query({ page: "3" })
   .reply(200, '{ "list": ["three"] }', {
-    Link: '<http://api.example.com/linked?page=3>; rel="last"'
+    Link: '<http://api.example.com/linked?page=3>; rel="last"',
   });
 
 nock(base)
