@@ -51,6 +51,15 @@ export type FetchPaginateNextFunction<Item> = (
   nextOptions: FetchPaginateNextOptions<Item>
 ) => FetchPaginateNext;
 
+export interface FetchPaginateIteratorValue<$Body, Item> {
+  page?: $Body;
+  pages: $Body[];
+  response: Response;
+  responses: Response[];
+  pageItems: Item[];
+  items: Item[];
+}
+
 export interface FetchPaginateOptions<$Body, Item> {
   fetchOptions?: ResponseInit;
   until?: FetchPaginateUntilFunction<$Body, Item>;
@@ -212,7 +221,7 @@ const defaultNext = <Item>({
   if (nextFromLinkHeader) return nextFromLinkHeader;
 };
 
-const fetchPaginate = async <$Body, Item>(
+const fetchPaginateIterator = <$Body, Item>(
   $url: URL | string,
   options: FetchPaginateOptions<$Body, Item> = {}
 ) => {
@@ -233,93 +242,138 @@ const fetchPaginate = async <$Body, Item>(
   let { limit, offset = firstOffset, page = firstPage } = options;
 
   let pages: $Body[] = [];
+  let pageBody: $Body;
   let pageItems: Item[] = [];
   let items: Item[] = [];
   let responses: Response[] = [];
+  let response: Response;
+
+  let done: boolean = false;
 
   let count = 0;
 
-  let pageBody;
-
-  let response;
   let nextUrl = url;
 
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const nextMeta = await next<Item>({
-      url: nextUrl,
-      response,
-      pageItems,
-      firstPage,
-      firstOffset,
-      limit,
-      offset,
-      page,
-      params,
-      isFirst: count === 0,
-    });
-
-    if (!nextMeta) break;
-
-    nextUrl = nextMeta.url || url;
-    limit = nextMeta.limit || limit;
-    offset = nextMeta.offset || offset;
-    page = nextMeta.page || page;
-
-    try {
-      response = await fetch(nextUrl, fetchOptions);
-
-      responses.push(response);
-
-      count++;
-    } catch (error) {
-      if (response && response.status === 404 && count > 0) {
-        break;
-      }
-
-      throw error;
-    }
-
-    // end of pages, hopefully
-    if (response && response.status === 404 && count > 0) {
-      break;
-    }
-
-    if (response && response.status >= 400) {
-      throw new Error(
-        `failed page call ${count}, status ${response.status} ${response.statusText}`
-      );
-    }
-
-    pageBody = await parse(response);
-
-    if (!pageBody) break;
-
-    pages.push(pageBody);
-
-    pageItems = getItems<$Body, Item>(pageBody) ?? [];
-
-    items = merge(pages.map((page) => getItems(page)));
-
-    if (
-      until &&
-      (await until({
-        page: pageBody,
-        pages,
-        response,
-        responses,
-        pageItems,
-        items,
-      }))
-    )
-      break;
-  }
-
   return {
-    items,
-    pages,
-    responses,
+    getResult: () => ({
+      items,
+      pages,
+      responses,
+    }),
+    // @ts-ignore
+    [Symbol.asyncIterator]: () => ({
+      async next() {
+        const makeReturn = ({ done }: { done: boolean }) => {
+          const value: FetchPaginateIteratorValue<$Body, Item> = {
+            page: pageBody,
+            pages,
+            response,
+            responses,
+            pageItems,
+            items,
+          };
+
+          return {
+            done,
+            value,
+          };
+        };
+
+        const makeShortCircuit = () => makeReturn({ done: true });
+
+        if (done) {
+          return makeShortCircuit();
+        }
+
+        const nextMeta = await next<Item>({
+          url: nextUrl,
+          response,
+          pageItems,
+          firstPage,
+          firstOffset,
+          limit,
+          offset,
+          page,
+          params,
+          isFirst: count === 0,
+        });
+
+        if (!nextMeta) {
+          return makeShortCircuit();
+        }
+
+        nextUrl = nextMeta.url || url;
+        limit = nextMeta.limit || limit;
+        offset = nextMeta.offset || offset;
+        page = nextMeta.page || page;
+
+        try {
+          response = await fetch(nextUrl, fetchOptions);
+
+          responses.push(response);
+
+          count++;
+        } catch (error) {
+          if (response && response.status === 404 && count > 0) {
+            return makeShortCircuit();
+          }
+
+          throw error;
+        }
+
+        // end of pages, hopefully
+        if (response && response.status === 404 && count > 0) {
+          return makeShortCircuit();
+        }
+
+        if (response && response.status >= 400) {
+          throw new Error(
+            `failed page call ${count}, status ${response.status} ${response.statusText}`
+          );
+        }
+
+        pageBody = await parse(response);
+
+        if (!pageBody) {
+          return makeShortCircuit();
+        }
+
+        pages.push(pageBody);
+
+        pageItems = getItems<$Body, Item>(pageBody) ?? [];
+
+        items = merge(pages.map((page) => getItems(page)));
+
+        done = until
+          ? await until({
+              page: pageBody,
+              pages,
+              response,
+              responses,
+              pageItems,
+              items,
+            })
+          : false;
+
+        return makeReturn({ done: false });
+      },
+    }),
   };
 };
+
+const fetchPaginate = async <$Body, Item>(
+  $url: URL | string,
+  options: FetchPaginateOptions<$Body, Item> = {}
+) => {
+  const iterator = fetchPaginateIterator($url, options);
+
+  for await (const _next of iterator) {
+    // just proceed
+  }
+
+  return iterator.getResult();
+};
+
+export { fetchPaginate, fetchPaginateIterator };
 
 export default fetchPaginate;

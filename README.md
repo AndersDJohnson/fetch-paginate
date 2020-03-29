@@ -20,12 +20,17 @@ Resolves with the merged `items` object.
 
 Isomorphic - works in Node and browser - if used with `isomorphic-fetch`.
 
+Supports [async iterators (`for await...of`)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of)
+so you can process each page serially.
+
 Requires a `fetch` polyfill for environments that don't support that.
 Recommended is `isomorphic-fetch` or `node-fetch` or `whatwg-fetch`.
 
 ## Usage
 
 ```js
+import { fetchPaginate } from "fetch-paginate";
+
 const { items } = await fetchPaginate("https://api.example.com/foo");
 ```
 
@@ -35,11 +40,11 @@ If the the API returns your results in a nested response, use a custom `getItems
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {
-  getItems: body => body.results
+  getItems: (body) => body.results,
 });
 ```
 
-If you need access to all the page bodies or response objects, use:
+If you need access to all the page bodies or entire `response` objects, use:
 
 ```js
 const { pages, responses } = await fetchPaginate("https://api.example.com/foo");
@@ -47,8 +52,10 @@ const { pages, responses } = await fetchPaginate("https://api.example.com/foo");
 
 You can also specify the types of your objects with generics:
 
-```js
-const { items, pages } = await fetchPaginate<MyBody, MyItem>("https://api.example.com/foo");
+```ts
+const { items, pages } = await fetchPaginate<MyBody, MyItem>(
+  "https://api.example.com/foo"
+);
 
 // Now `items` has type `MyItem[]`,
 // and `pages` has type `MyBody[]`.
@@ -56,6 +63,49 @@ const { items, pages } = await fetchPaginate<MyBody, MyItem>("https://api.exampl
 
 ```js
 fetchPaginate(url, options);
+```
+
+### Async Iterators
+
+If you want to serially process each page, you can use `fetchPaginateIterator`,
+build on the [async iterators (`for await...of`)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of) API.
+
+```js
+import { fetchPaginateIterator } from "fetch-paginate";
+
+const myIterator = fetchPaginateIterator("https://api.example.com/foo", {
+  getItems: (body) => body.results,
+});
+
+for await (const { pageItems } of myIterator) {
+  console.log(pageItems);
+}
+```
+
+You can also get each page body or entire `response` object:
+
+```js
+for await (const { page, response } of myIterator) {
+  console.log(page, response);
+}
+```
+
+And also get the final result which has the same shape as `fetchPaginage` (`{ items, pages, responses }`):
+
+```js
+for await (const { pageItems } of myIterator) {
+  console.log(pageItems);
+}
+
+myIterator.getResult();
+```
+
+The iterator similarly supports TypeScript generics:
+
+```ts
+const myIterator = await fetchPaginateIterator<MyBody, MyItem>(
+  "https://api.example.com/foo"
+);
 ```
 
 ### Browser
@@ -85,7 +135,7 @@ An optional function specifying how to get items list from a page of response bo
 Defaults to identity:
 
 ```js
-body => body;
+(body) => body;
 ```
 
 ### `merge`
@@ -96,7 +146,7 @@ Receives an array of arrays of items from each page (from `getItems(await parse(
 Defaults to flatten arrays:
 
 ```js
-setOfSetsOfItems => setOfSetsOfItems.reduce((acc, v) => [...acc, ...v], []);
+(setOfSetsOfItems) => setOfSetsOfItems.reduce((acc, v) => [...acc, ...v], []);
 ```
 
 ### `parse`
@@ -106,7 +156,8 @@ An optional function specifying how to parse responses. Return a promise.
 Defaults to parse JSON:
 
 ```js
-response => (response.ok && response.status !== 204 ? response.json() : response.text());
+(response) =>
+  response.ok && response.status !== 204 ? response.json() : response.text();
 ```
 
 ### `until`
