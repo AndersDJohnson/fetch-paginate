@@ -10,14 +10,12 @@ or:
 
 [![yarn add fetch-paginate (copy)](https://copyhaste.com/i?t=yarn%20add%20fetch-paginate)](https://copyhaste.com/c?t=yarn%20add%20fetch-paginate "yarn add fetch-paginate (copy)")
 
-Get multiple pages of results from paginated APIs with `fetch`
+Fetches multiple pages from paginated APIs with `fetch`
 (using either `Link` headers like GitHub,
-or with `page` or `offset` & `limit` query parameters) - and return a merged array of items.
+or with `page` or `offset` & `limit` query parameters).
 
-You can use it to search a paginated API until you find your item (see [Async Iterators](#async-iterators) or `until` option).
+Also use to search a paginated API until you find your item (see [Async Iterators](#async-iterators) or `until` option).
 
-* Supports [async iterators (`for await...of`)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of)
-so you can process each page serially.
 * Supports TypeScript.
 * Isomorphic - works in Node and browser (if used with `isomorphic-fetch`) *
 
