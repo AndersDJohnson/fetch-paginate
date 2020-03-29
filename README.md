@@ -70,6 +70,8 @@ fetchPaginate(url, options);
 If you want to serially process each page, you can use `fetchPaginateIterator`,
 build on the [async iterators (`for await...of`)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of) API.
 
+This also means you can use `break` and `continue` semantics - perhaps as an alterative to the `until` option.
+
 ```js
 import { fetchPaginateIterator } from "fetch-paginate";
 
@@ -87,6 +89,8 @@ You can also get each page body or entire `response` object:
 ```js
 for await (const { page, response } of myIterator) {
   console.log(page, response);
+  
+  if (page.something === true) break;
 }
 ```
 
