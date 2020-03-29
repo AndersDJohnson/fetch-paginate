@@ -10,21 +10,19 @@ or:
 
 [![yarn add fetch-paginate (copy)](https://copyhaste.com/i?t=yarn%20add%20fetch-paginate)](https://copyhaste.com/c?t=yarn%20add%20fetch-paginate "yarn add fetch-paginate (copy)")
 
-Supports TypeScript.
+Get multiple pages of results from paginated APIs with `fetch`
+(using either `Link` headers like GitHub,
+or with `page` or `offset` & `limit` query parameters) - and return a merged array of items.
 
-Get multiple pages of results from paginated APIs with `fetch`,
-using either `Link` headers like GitHub,
-or with `page` or `offset` & `limit` query parameters.
+You can use it to search a paginated API until you find your item (see [Async Iterators](#async-iterators) or `until` option).
 
-Resolves with the merged `items` object.
-
-Isomorphic - works in Node and browser - if used with `isomorphic-fetch`.
-
-Supports [async iterators (`for await...of`)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of)
+* Supports [async iterators (`for await...of`)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of)
 so you can process each page serially.
+* Supports TypeScript.
+* Isomorphic - works in Node and browser (if used with `isomorphic-fetch`) *
 
-Requires a `fetch` polyfill for environments that don't support that.
-Recommended is `isomorphic-fetch` or `node-fetch` or `whatwg-fetch`.
+*\* Requires a `fetch` polyfill for environments that don't support that.
+Recommended is `isomorphic-fetch` or `node-fetch` or `whatwg-fetch`.*
 
 ## Usage
 
@@ -84,13 +82,22 @@ for await (const { pageItems } of myIterator) {
 }
 ```
 
+For example, if you want to stop after finding a certain item:
+
+```ts
+let foundItem;
+for await (const { pageItems } of myIterator) {
+  foundItem = pageItems.find(item => item.title.match(/Something/));
+  if (foundItem) break;
+}
+console.log(foundItem);
+```
+
 You can also get each page body or entire `response` object:
 
 ```js
 for await (const { page, response } of myIterator) {
   console.log(page, response);
-  
-  if (page.something === true) break;
 }
 ```
 
