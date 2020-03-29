@@ -1,5 +1,9 @@
 import "isomorphic-fetch";
-import fetchPaginate, { FetchPaginateUntilOptions } from "..";
+import {
+  fetchPaginate,
+  fetchPaginateIterator,
+  FetchPaginateUntilOptions,
+} from "..";
 import { base } from "./nocks";
 
 const linkedUrl = `${base}/linked`;
@@ -9,13 +13,27 @@ const offsetUrl = `${base}/offset`;
 const offsetLimitUrl = `${base}/offset-limit`;
 const offsetEmptyEndUrl = `${base}/offset-empty-end`;
 
-const fetchPaginateWrapper = (url: string, opts?: any) =>
-  fetchPaginate(url, {
-    getItems: (data: { list?: string[] }) => data.list,
+const getItems = (data: { list?: string[] }) => data.list;
+
+type Item = string;
+
+interface $Body {
+  list: Item[];
+}
+
+const fetchPaginateMakeIteratorWrapper = (url: string, opts?: any) =>
+  fetchPaginateIterator<$Body, Item>(url, {
+    getItems,
     ...opts,
   });
 
-describe("index", () => {
+const fetchPaginateWrapper = (url: string, opts?: any) =>
+  fetchPaginate<$Body, Item>(url, {
+    getItems,
+    ...opts,
+  });
+
+describe("fetchPaginate", () => {
   it("should handle non-paginated requests", async () => {
     const { items } = await fetchPaginateWrapper("http://api.example.com/one");
     expect(items).toEqual(["one"]);
@@ -129,6 +147,28 @@ describe("index", () => {
         params: { offset: true },
       });
       expect(items).toEqual(["one", "two", "three"]);
+    });
+  });
+
+  describe("iterator", () => {
+    it("should work", async () => {
+      const allItems: string[][] = [];
+      let mergedPageItems: string[] = [];
+      const iterator = fetchPaginateMakeIteratorWrapper(linkedUrl);
+      for await (const { items, pageItems } of iterator) {
+        allItems.push(items);
+        mergedPageItems = [...mergedPageItems, ...pageItems];
+      }
+      expect(mergedPageItems).toEqual(["one", "two", "three"]);
+      expect(allItems).toEqual([
+        ["one"],
+        ["one", "two"],
+        ["one", "two", "three"],
+      ]);
+
+      const result = iterator.getResult();
+
+      expect(result.items).toEqual(["one", "two", "three"]);
     });
   });
 });
