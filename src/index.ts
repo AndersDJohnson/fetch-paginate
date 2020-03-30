@@ -336,25 +336,26 @@ const fetchPaginateIterator = <$Body, Item>(
         page = nextMeta.page || page;
 
         try {
-          const fetch_ = getFetch({
-            url: nextUrl,
-            fetchOptions,
-            limit,
-            offset,
-            page,
-            prev: {
-              url: prevUrl,
-              limit: prevLimit,
-              offset: prevOffset,
-              page: prevPage,
-              pageBody,
-              pageItems,
-              response,
-              items,
-              pages,
-              responses,
-            },
-          });
+          const fetch_ =
+            (await getFetch({
+              url: nextUrl,
+              fetchOptions,
+              limit,
+              offset,
+              page,
+              prev: {
+                url: prevUrl,
+                limit: prevLimit,
+                offset: prevOffset,
+                page: prevPage,
+                pageBody,
+                pageItems,
+                response,
+                items,
+                pages,
+                responses,
+              },
+            })) ?? fetch;
 
           response = await fetch_(nextUrl, fetchOptions);
 

@@ -16,11 +16,11 @@ or with `page` or `offset` & `limit` query parameters).
 
 Also use to search a paginated API until you find your item (see [Async Iterators](#async-iterators) or `until` option).
 
-* Supports TypeScript.
-* Isomorphic - works in Node and browser (if used with `isomorphic-fetch`) *
+- Supports TypeScript.
+- Isomorphic - works in Node and browser (if used with `isomorphic-fetch`) \*
 
-*\* Requires a `fetch` polyfill for environments that don't support that.
-Recommended is `isomorphic-fetch` or `node-fetch` or `whatwg-fetch`.*
+_\* Requires a `fetch` polyfill for environments that don't support that.
+Recommended is `isomorphic-fetch` or `node-fetch` or `whatwg-fetch`._
 
 ## Usage
 
@@ -85,7 +85,7 @@ For example, if you want to stop after finding a certain item:
 ```ts
 let foundItem;
 for await (const { pageItems } of myIterator) {
-  foundItem = pageItems.find(item => item.title.match(/Something/));
+  foundItem = pageItems.find((item) => item.title.match(/Something/));
   if (foundItem) break;
 }
 console.log(foundItem);
@@ -117,6 +117,33 @@ const myIterator = await fetchPaginateIterator<MyBody, MyItem>(
 );
 ```
 
+### Custom Fetch
+
+If you want custom fetching behavior like caching,
+you can provide a factory for a custom `fetch`-compatiable function, e.g.:
+
+```js
+await fetchPaginate("https://api.example.com/foo", {
+  getFetch: () => async (url, options) => {
+    const cached = await cache.get(url);
+    if (cached) return new Response(cached.body, cached.init);
+    return fetch(url, options);
+  },
+});
+```
+
+Or you can resolve that `fetch`-like function asynchronously.
+If you return `undefined`, it'll fall back to global `fetch`:
+
+````js
+await fetchPaginate("https://api.example.com/foo", {
+  getFetch: async () => {
+    const cached = await cache.get(url);
+    if (cached) return async () => new Response(cached.body, cached.init);
+  },
+});
+```
+
 ### Browser
 
 For bundled/browser use `fetch-paginate/bundle` (which includes dependencies, except `fetch`):
@@ -124,7 +151,7 @@ For bundled/browser use `fetch-paginate/bundle` (which includes dependencies, ex
 ```js
 import "isomorphic-fetch";
 import fetchPaginate from "fetch-paginate/bundle";
-```
+````
 
 or even with the UMD global (on `window`):
 
@@ -260,3 +287,10 @@ Defaults to `0`.
 `ResponseInit` (`Object`)
 
 Additional options to pass to `fetch`.
+
+### `getFetch`
+
+`(args: FetchPaginateGetFetchArgs) => ( typeof fetch | Promise<typeof fetch> )`
+
+A factory that provides a `fetch`-compatible function.
+Use this, e.g., to define your own custom cache wrapper.
