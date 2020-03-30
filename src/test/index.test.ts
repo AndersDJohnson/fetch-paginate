@@ -231,4 +231,19 @@ describe("fetchPaginate", () => {
       expect(result.items).toEqual(["one", "two", "three"]);
     });
   });
+
+  describe("graphql", () => {
+    fetchPaginate("https://graphql.example.com", {
+      method: 'post',
+      body: ({ body }) => ({
+        query: `query someQuery($page: Int = 1) {
+          products(page: $page) {
+            id
+            nextPage
+          }
+        }`,
+        variables: { page: body?.products?.nextPage },
+      }),
+    });
+  });
 });
