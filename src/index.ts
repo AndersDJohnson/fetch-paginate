@@ -60,6 +60,8 @@ export interface FetchPaginateIteratorValue<$Body, Item> {
   items: Item[];
 }
 
+export interface FetchPaginateGetFetchArgs {}
+
 export interface FetchPaginateOptions<$Body, Item> {
   fetchOptions?: ResponseInit;
   until?: FetchPaginateUntilFunction<$Body, Item>;
@@ -73,6 +75,7 @@ export interface FetchPaginateOptions<$Body, Item> {
   page?: number;
   firstOffset?: number;
   firstPage?: number;
+  getFetch?: (args: FetchPaginateGetFetchArgs) => typeof fetch;
 }
 
 // @ts-ignore
@@ -235,6 +238,7 @@ const fetchPaginateIterator = <$Body, Item>(
     firstOffset = 0,
     firstPage = 1,
     fetchOptions,
+    getFetch = () => fetch,
   } = options;
 
   const url = typeof $url === "string" ? $url : $url.toString();
@@ -285,6 +289,8 @@ const fetchPaginateIterator = <$Body, Item>(
           return makeShortCircuit();
         }
 
+        const prevUrl = nextUrl;
+
         const nextMeta = await next<Item>({
           url: nextUrl,
           response,
@@ -302,13 +308,37 @@ const fetchPaginateIterator = <$Body, Item>(
           return makeShortCircuit();
         }
 
+        const prevLimit = limit;
+        const prevOffset = offset;
+        const prevPage = page;
+
         nextUrl = nextMeta.url || url;
         limit = nextMeta.limit || limit;
         offset = nextMeta.offset || offset;
         page = nextMeta.page || page;
 
         try {
-          response = await fetch(nextUrl, fetchOptions);
+          const fetch_ = getFetch({
+            url: nextUrl,
+            fetchOptions,
+            limit,
+            offset,
+            params,
+            prev: {
+              url: prevUrl,
+              limit: prevLimit,
+              offset: prevOffset,
+              page: prevPage,
+              pageBody,
+              pageItems,
+              response,
+              items,
+              pages,
+              responses,
+            },
+          });
+
+          response = await fetch_(nextUrl, fetchOptions);
 
           responses.push(response);
 

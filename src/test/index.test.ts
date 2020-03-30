@@ -150,6 +150,34 @@ describe("fetchPaginate", () => {
     });
   });
 
+  describe("getFetch", () => {
+    it("should work", async () => {
+      const body = '{"foo":1}';
+      const customFetch = jest.fn(async () => new Response(body));
+      const getFetch = jest.fn(() => customFetch);
+      const url = "http://api.example.com/one";
+      const fetchOptions = { headers: { Test: "Yes" } };
+      await fetchPaginateWrapper(url, { getFetch, fetchOptions });
+      expect(getFetch).toHaveBeenCalledTimes(1);
+      expect(getFetch).toHaveBeenCalledWith({
+        url,
+        fetchOptions,
+        offset: 0,
+        prev: {
+          items: [],
+          offset: 0,
+          page: 1,
+          pageItems: [],
+          pages: [{ foo: 1 }],
+          responses: [expect.anything()],
+          url,
+        },
+      });
+      expect(customFetch).toHaveBeenCalledTimes(1);
+      expect(customFetch).toHaveBeenCalledWith(url, fetchOptions);
+    });
+  });
+
   describe("iterator", () => {
     it("should work", async () => {
       const allItems: string[][] = [];
