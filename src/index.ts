@@ -60,7 +60,25 @@ export interface FetchPaginateIteratorValue<$Body, Item> {
   items: Item[];
 }
 
-export interface FetchPaginateGetFetchArgs {}
+export interface FetchPaginateGetFetchArgs<$Body, Item> {
+  url: string;
+  fetchOptions?: ResponseInit;
+  offset?: number;
+  limit?: number;
+  page?: number;
+  prev: {
+    url: string;
+    offset?: number;
+    limit?: number;
+    page?: number;
+    items: Item[];
+    pageItems: Item[];
+    pageBody?: $Body;
+    pages: $Body[];
+    response: Response;
+    responses: Response[];
+  };
+}
 
 export interface FetchPaginateOptions<$Body, Item> {
   fetchOptions?: ResponseInit;
@@ -75,7 +93,7 @@ export interface FetchPaginateOptions<$Body, Item> {
   page?: number;
   firstOffset?: number;
   firstPage?: number;
-  getFetch?: (args: FetchPaginateGetFetchArgs) => typeof fetch;
+  getFetch?: (args: FetchPaginateGetFetchArgs<$Body, Item>) => typeof fetch;
 }
 
 // @ts-ignore
@@ -323,7 +341,7 @@ const fetchPaginateIterator = <$Body, Item>(
             fetchOptions,
             limit,
             offset,
-            params,
+            page,
             prev: {
               url: prevUrl,
               limit: prevLimit,

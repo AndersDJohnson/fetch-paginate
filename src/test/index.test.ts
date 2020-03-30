@@ -163,6 +163,7 @@ describe("fetchPaginate", () => {
         url,
         fetchOptions,
         offset: 0,
+        page: 1,
         prev: {
           items: [],
           offset: 0,
