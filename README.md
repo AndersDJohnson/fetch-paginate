@@ -120,24 +120,23 @@ const myIterator = await fetchPaginateIterator<MyBody, MyItem>(
 ### Custom Fetch
 
 If you want custom fetching behavior like caching,
-you can provide a factory for a custom `fetch`-compatiable function, e.g.:
+you can provide a factory for a custom `fetch`-compatiable function.
+If you return `undefined`, it'll fall back to global `fetch`:
 
 ```js
 await fetchPaginate("https://api.example.com/foo", {
-  getFetch: () => async (url, options) => {
+  getFetch: ({ url, offset, page, fetchOptions, ...etc }) => async () => {
     const cached = await cache.get(url);
     if (cached) return new Response(cached.body, cached.init);
-    return fetch(url, options);
   },
 });
 ```
 
-Or you can resolve that `fetch`-like function asynchronously.
-If you return `undefined`, it'll fall back to global `fetch`:
+Or you can resolve that `fetch`-like function asynchronously:
 
 ````js
 await fetchPaginate("https://api.example.com/foo", {
-  getFetch: async () => {
+  getFetch: async ({ url }) => {
     const cached = await cache.get(url);
     if (cached) return async () => new Response(cached.body, cached.init);
   },
