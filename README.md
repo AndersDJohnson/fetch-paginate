@@ -17,11 +17,11 @@ or with `page` or `offset` & `limit` query parameters).
 Also use to search a paginated API until you find your item (see [Async Iterators](#async-iterators) or `until` option).
 
 - Supports TypeScript.
-- Isomorphic - works in Node and browser (if used with `isomorphic-fetch`) \*
+- Isomorphic - works in Node and browser<sup>*</sup>
 - Supports [custom `fetch`](#-custom-fetch) wrappers for caching, etc.
 
-_\* Requires a `fetch` polyfill for environments that don't support that.
-Recommended is `isomorphic-fetch` or `node-fetch` or `whatwg-fetch`._
+_<sup>*</sup> For environments without `fetch` support, a polyfill is required.
+Recommend `isomorphic-fetch` or `node-fetch` or `whatwg-fetch`._
 
 ## Usage
 
