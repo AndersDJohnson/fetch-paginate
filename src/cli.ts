@@ -7,17 +7,6 @@ import fetchPaginate, {
   FetchPaginateParamsObject,
 } from ".";
 
-/*
-  fetchOptions?: ResponseInit;
-  until?: FetchPaginateUntilFunction<$Body, Item>;
-  getItems?: FetchPaginateItemsFunction<$Body, Item>;
-  merge?: FetchPaginateMergeFunction<Item>;
-  parse?: FetchPaginateParseFunction<$Body>;
-  next?: FetchPaginateNextFunction<Item>;
-  limit?: number;
-  offset?: number;
-  page?: number;
-*/
 const program = yargs
   .usage("$0 <url>")
   .option("i", {
