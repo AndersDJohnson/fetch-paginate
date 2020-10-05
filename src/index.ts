@@ -194,12 +194,11 @@ const getNextWithParams = <Item>({
     const nextPage = isFirst ? page : page + 1;
 
     if (nextPage !== firstPage) {
+      const defaultPageValue = "page";
       parsedUrl.searchParams.set(
-        typeof params === "boolean" && params
-          ? "page"
-          : params.page === true
-          ? "page"
-          : params.page || "page",
+        (typeof params === "boolean" && params) || params.page
+          ? defaultPageValue
+          : params.page || defaultPageValue,
         nextPage.toString()
       );
     }
