@@ -1,12 +1,12 @@
 import parseLinkHeader from "parse-link-header";
 
-interface ParamsObject {
+export interface FetchPaginateParamsObject {
   page?: string;
   limit?: boolean | string;
   offset?: boolean | string;
 }
 
-type Params = ParamsObject | boolean;
+export type FetchPaginateParams = FetchPaginateParamsObject | boolean;
 
 export interface FetchPaginateUntilOptions<$Body, Item> {
   page?: $Body;
@@ -26,7 +26,7 @@ export interface FetchPaginateNextOptions<Item> {
   page: number;
   limit?: number;
   offset: number;
-  params?: Params;
+  params?: FetchPaginateParams;
   isFirst: boolean;
 }
 
@@ -89,7 +89,7 @@ export interface FetchPaginateOptions<$Body, Item> {
   next?: FetchPaginateNextFunction<Item>;
   limit?: number;
   offset?: number;
-  params?: Params;
+  params?: FetchPaginateParams;
   page?: number;
   firstOffset?: number;
   firstPage?: number;
@@ -148,7 +148,7 @@ const getNextWithParams = <Item>({
   offset,
   isFirst,
 }: {
-  params?: Params;
+  params?: FetchPaginateParams;
   pageItems: Item[];
   url: string;
   firstPage: number;
