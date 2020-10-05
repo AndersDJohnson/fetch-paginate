@@ -21,8 +21,6 @@ export interface FetchPaginateNextOptions<Item> {
   url: string;
   response?: Response;
   pageItems: Item[];
-  firstPage: number;
-  firstOffset: number;
   page: number;
   limit?: number;
   offset: number;
@@ -91,8 +89,6 @@ export interface FetchPaginateOptions<$Body, Item> {
   offset?: number;
   params?: FetchPaginateParams;
   page?: number;
-  firstOffset?: number;
-  firstPage?: number;
   getFetch?: (args: FetchPaginateGetFetchArgs<$Body, Item>) => typeof fetch;
 }
 
@@ -141,8 +137,6 @@ const getNextWithParams = <Item>({
   params,
   pageItems,
   url,
-  firstPage,
-  firstOffset,
   page,
   limit,
   offset,
@@ -151,8 +145,6 @@ const getNextWithParams = <Item>({
   params?: FetchPaginateParams;
   pageItems: Item[];
   url: string;
-  firstPage: number;
-  firstOffset: number;
   page: number;
   limit?: number;
   offset: number;
@@ -177,9 +169,7 @@ const getNextWithParams = <Item>({
     const offsetParam =
       (params.offset === true ? undefined : params.offset) || "offset";
 
-    if (nextOffset !== firstOffset) {
-      parsedUrl.searchParams.set(offsetParam, nextOffset.toString());
-    }
+    parsedUrl.searchParams.set(offsetParam, nextOffset.toString());
 
     if (nextLimit) {
       parsedUrl.searchParams.set(limitParam, nextLimit.toString());
@@ -193,15 +183,13 @@ const getNextWithParams = <Item>({
   } else {
     const nextPage = isFirst ? page : page + 1;
 
-    if (nextPage !== firstPage) {
-      const defaultPageValue = "page";
-      parsedUrl.searchParams.set(
-        params === true || params.page === true
-          ? defaultPageValue
-          : params.page || defaultPageValue,
-        nextPage.toString()
-      );
-    }
+    const defaultPageValue = "page";
+    parsedUrl.searchParams.set(
+      params === true || params.page === true
+        ? defaultPageValue
+        : params.page || defaultPageValue,
+      nextPage.toString()
+    );
 
     return {
       url: parsedUrl.toString(),
@@ -214,8 +202,6 @@ const defaultNext = <Item>({
   url,
   response,
   pageItems,
-  firstPage,
-  firstOffset,
   page,
   limit,
   offset,
@@ -226,8 +212,6 @@ const defaultNext = <Item>({
     url,
     pageItems,
     page,
-    firstPage,
-    firstOffset,
     limit,
     offset,
     params,
@@ -256,8 +240,6 @@ const fetchPaginateIterator = <$Body, Item>(
     parse = defaultParse,
     next = defaultNext,
     until,
-    firstOffset = 0,
-    firstPage = 1,
     fetchOptions,
     getFetch = () => fetch,
   } = options;
@@ -280,7 +262,7 @@ const fetchPaginateIterator = <$Body, Item>(
 
   const url = typeof $url === "string" ? $url : $url.toString();
 
-  let { limit, offset = firstOffset, page = firstPage } = options;
+  let { limit, offset = 0, page = 1 } = options;
 
   let pages: $Body[] = [];
   let pageBody: $Body;
@@ -332,8 +314,6 @@ const fetchPaginateIterator = <$Body, Item>(
           url: nextUrl,
           response,
           pageItems,
-          firstPage,
-          firstOffset,
           limit,
           offset,
           page,
