@@ -1,7 +1,7 @@
 import parseLinkHeader from "parse-link-header";
 
 export interface FetchPaginateParamsObject {
-  page?: string;
+  page?: boolean | string;
   limit?: boolean | string;
   offset?: boolean | string;
 }
@@ -194,8 +194,11 @@ const getNextWithParams = <Item>({
     const nextPage = isFirst ? page : page + 1;
 
     if (nextPage !== firstPage) {
+      const defaultPageValue = "page";
       parsedUrl.searchParams.set(
-        typeof params === "boolean" && params ? "page" : params.page || "page",
+        params === true || params.page === true
+          ? defaultPageValue
+          : params.page || defaultPageValue,
         nextPage.toString()
       );
     }
