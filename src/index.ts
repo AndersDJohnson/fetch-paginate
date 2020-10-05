@@ -394,7 +394,19 @@ const fetchPaginateIterator = <$Body, Item>(
 
         pageItems = getItems<$Body, Item>(pageBody) ?? [];
 
-        items = merge(pages.map((page) => getItems(page)));
+        items = merge(
+          pages.map((page) => {
+            const eachPageItems = getItems<$Body, Item>(page);
+
+            if (!Array.isArray(eachPageItems)) {
+              throw new Error(
+                "`getItems` option applied to a page must yield an array"
+              );
+            }
+
+            return eachPageItems;
+          })
+        );
 
         done = until
           ? await until({
