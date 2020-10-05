@@ -196,7 +196,7 @@ const getNextWithParams = <Item>({
     if (nextPage !== firstPage) {
       const defaultPageValue = "page";
       parsedUrl.searchParams.set(
-        (typeof params === "boolean" && params) || params.page
+        params === true || params.page === true
           ? defaultPageValue
           : params.page || defaultPageValue,
         nextPage.toString()
