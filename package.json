@@ -13,7 +13,15 @@
   "scripts": {
     "test": "jest",
     "build": "webpack && tsc",
-    "prepublish": "yarn build"
+    "prepublish": "yarn build",
+    "dev:server": "ts-node src/test/server.ts --log-error",
+    "dev:cli:p2": "ts-node --log-error src/cli.ts http://localhost:54321/pages -i items -p 2",
+    "dev:cli:pages": "ts-node --log-error src/cli.ts http://localhost:54321/pages -i items --params.page",
+    "dev:cli:pg": "ts-node --log-error src/cli.ts http://localhost:54321/pg -i items --params.page pg",
+    "dev:cli:offset": "ts-node --log-error src/cli.ts http://localhost:54321/offset -i items --params.offset",
+    "dev:cli:ofs": "ts-node --log-error src/cli.ts http://localhost:54321/ofs -i items --params.offset ofs",
+    "dev:cli:limit": "ts-node --log-error src/cli.ts http://localhost:54321/limit -i items -l 3",
+    "dev:cli:lmt": "ts-node --log-error src/cli.ts http://localhost:54321/lmt -i items --params.limit lmt"
   },
   "devDependencies": {
     "@babel/cli": "^7.6.4",
@@ -24,16 +32,21 @@
     "@babel/preset-env": "^7.6.3",
     "@babel/preset-typescript": "^7.8.3",
     "@sindresorhus/tsconfig": "^0.7.0",
+    "@types/express": "^4.17.8",
     "@types/jest": "^25.1.4",
+    "@types/lodash": "^4.14.161",
     "@types/nock": "^11.1.0",
+    "@types/node": "^14.11.2",
     "@types/parse-link-header": "^1.0.0",
     "babel-loader": "^8.0.6",
     "cross-fetch": "^3.0.5",
     "eslint": "^5.16.0",
+    "express": "^4.17.1",
     "jest": "^25.1.0",
     "nock": "^12.0.2",
     "prettier": "^2.0.2",
     "ts-jest": "^25.2.1",
+    "ts-node": "^9.0.0",
     "typescript": "^3.8.3",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9",
@@ -42,6 +55,8 @@
   "dependencies": {
     "@babel/runtime": "^7.6.3",
     "core-js": "^3.3.3",
-    "parse-link-header": "^1.0.1"
+    "lodash": "^4.17.20",
+    "parse-link-header": "^1.0.1",
+    "yargs": "^16.0.3"
   }
 }
