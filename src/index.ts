@@ -262,15 +262,20 @@ const fetchPaginateIterator = <$Body, Item>(
     getFetch = () => fetch,
   } = options;
 
-  const actualParams: FetchPaginateParams = {
-    ...(params === true ? {} : params),
-  };
+  const actualParams: FetchPaginateParamsObject | undefined =
+    params || options.page || options.limit || options.offset
+      ? {
+          ...(params === true ? {} : params),
+        }
+      : undefined;
 
-  if (options.page) {
-    actualParams.page = actualParams.page || true;
-  } else if (options.limit || options.offset) {
-    actualParams.limit = actualParams.limit || true;
-    actualParams.offset = actualParams.offset || true;
+  if (actualParams) {
+    if (options.page) {
+      actualParams.page = actualParams.page || true;
+    } else if (options.limit || options.offset) {
+      actualParams.limit = actualParams.limit || true;
+      actualParams.offset = actualParams.offset || true;
+    }
   }
 
   const url = typeof $url === "string" ? $url : $url.toString();
