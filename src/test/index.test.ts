@@ -112,7 +112,6 @@ describe("fetchPaginate", () => {
 
     it("should paginate from page 2", async () => {
       const { items } = await fetchPaginateWrapper(pagedUrl, {
-        params: true,
         page: 2,
       });
       expect(items).toEqual(["two", "three"]);
@@ -136,7 +135,6 @@ describe("fetchPaginate", () => {
 
     it("should paginate with specified limit", async () => {
       const { items } = await fetchPaginateWrapper(offsetLimitUrl, {
-        params: { offset: true },
         limit: 1,
       });
       expect(items).toEqual(["one", "two", "three"]);
