@@ -20,4 +20,4 @@ Also use to search a paginated API until you find your item (see [Async Iterator
 - Isomorphic - works in Node and browser<sup>*</sup>
 - Supports [custom `fetch`](#-custom-fetch) wrappers for caching, etc.
 
-See docs at: https://andersdjohnson.com/code/fetch-paginate/
+See docs at: https://andersdjohnson.github.io/fetch-paginate/

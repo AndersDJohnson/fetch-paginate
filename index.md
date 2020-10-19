@@ -1,8 +1,4 @@
-# fetch-paginate
-
 [![npm](https://img.shields.io/npm/v/fetch-paginate.svg)](https://www.npmjs.com/package/fetch-paginate)
-
-> Get multiple pages of results from paginated APIs with `fetch`.
 
 [![npm install fetch-paginate (copy)](https://copyhaste.com/i?t=npm%20install%20fetch-paginate)](https://copyhaste.com/c?t=npm%20install%20fetch-paginate "npm install fetch-paginate (copy)")
 
