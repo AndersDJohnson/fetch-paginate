@@ -14,10 +14,10 @@ Fetches multiple pages from paginated APIs with `fetch`
 (using either `Link` headers like GitHub,
 or with `page` or `offset` & `limit` query parameters).
 
-Also use to search a paginated API until you find your item (see [Async Iterators](#async-iterators) or `until` option).
+Also use to search a paginated API until you find your item (see [Async Iterators](https://andersdjohnson.github.io/fetch-paginate/#async-iterators) or `until` option).
 
 - Supports TypeScript.
 - Isomorphic - works in Node and browser<sup>*</sup>
-- Supports [custom `fetch`](#-custom-fetch) wrappers for caching, etc.
+- Supports [custom `fetch`](https://andersdjohnson.github.io/fetch-paginate/#custom-fetch) wrappers for caching, etc.
 
-See docs at: https://andersdjohnson.com/code/fetch-paginate/
+See docs at: https://andersdjohnson.github.io/fetch-paginate/
