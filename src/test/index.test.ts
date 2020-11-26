@@ -112,7 +112,6 @@ describe("fetchPaginate", () => {
 
     it("should paginate from page 2", async () => {
       const { items } = await fetchPaginateWrapper(pagedUrl, {
-        params: true,
         page: 2,
       });
       expect(items).toEqual(["two", "three"]);
@@ -136,7 +135,6 @@ describe("fetchPaginate", () => {
 
     it("should paginate with specified limit", async () => {
       const { items } = await fetchPaginateWrapper(offsetLimitUrl, {
-        params: { offset: true },
         limit: 1,
       });
       expect(items).toEqual(["one", "two", "three"]);
@@ -152,7 +150,7 @@ describe("fetchPaginate", () => {
 
   describe("getFetch", () => {
     it("should work", async () => {
-      const body = '{"foo":1}';
+      const body = '{"list":[{"foo":1}]}';
       const customFetch = jest.fn(async () => new Response(body));
       const getFetch = jest.fn(() => customFetch);
       const url = "http://api.example.com/one";
@@ -169,7 +167,7 @@ describe("fetchPaginate", () => {
           offset: 0,
           page: 1,
           pageItems: [],
-          pages: [{ foo: 1 }],
+          pages: [{ list: [{ foo: 1 }] }],
           responses: [expect.anything()],
           url,
         },
@@ -179,7 +177,7 @@ describe("fetchPaginate", () => {
     });
 
     it("should resolve async", async () => {
-      const body = '{"foo":1}';
+      const body = '{"list":[{"foo":1}]}';
       const customFetch = jest.fn(async () => new Response(body));
       const getFetch = jest.fn(async () => customFetch);
       const url = "http://api.example.com/one";

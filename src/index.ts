@@ -1,12 +1,12 @@
 import parseLinkHeader from "parse-link-header";
 
-interface ParamsObject {
-  page?: string;
+export interface FetchPaginateParamsObject {
+  page?: boolean | string;
   limit?: boolean | string;
   offset?: boolean | string;
 }
 
-type Params = ParamsObject | boolean;
+export type FetchPaginateParams = FetchPaginateParamsObject | boolean;
 
 export interface FetchPaginateUntilOptions<$Body, Item> {
   page?: $Body;
@@ -21,12 +21,10 @@ export interface FetchPaginateNextOptions<Item> {
   url: string;
   response?: Response;
   pageItems: Item[];
-  firstPage: number;
-  firstOffset: number;
   page: number;
   limit?: number;
   offset: number;
-  params?: Params;
+  params?: FetchPaginateParams;
   isFirst: boolean;
 }
 
@@ -89,10 +87,8 @@ export interface FetchPaginateOptions<$Body, Item> {
   next?: FetchPaginateNextFunction<Item>;
   limit?: number;
   offset?: number;
-  params?: Params;
+  params?: FetchPaginateParams;
   page?: number;
-  firstOffset?: number;
-  firstPage?: number;
   getFetch?: (args: FetchPaginateGetFetchArgs<$Body, Item>) => typeof fetch;
 }
 
@@ -141,18 +137,14 @@ const getNextWithParams = <Item>({
   params,
   pageItems,
   url,
-  firstPage,
-  firstOffset,
   page,
   limit,
   offset,
   isFirst,
 }: {
-  params?: Params;
+  params?: FetchPaginateParams;
   pageItems: Item[];
   url: string;
-  firstPage: number;
-  firstOffset: number;
   page: number;
   limit?: number;
   offset: number;
@@ -177,9 +169,7 @@ const getNextWithParams = <Item>({
     const offsetParam =
       (params.offset === true ? undefined : params.offset) || "offset";
 
-    if (nextOffset !== firstOffset) {
-      parsedUrl.searchParams.set(offsetParam, nextOffset.toString());
-    }
+    parsedUrl.searchParams.set(offsetParam, nextOffset.toString());
 
     if (nextLimit) {
       parsedUrl.searchParams.set(limitParam, nextLimit.toString());
@@ -193,12 +183,13 @@ const getNextWithParams = <Item>({
   } else {
     const nextPage = isFirst ? page : page + 1;
 
-    if (nextPage !== firstPage) {
-      parsedUrl.searchParams.set(
-        typeof params === "boolean" && params ? "page" : params.page || "page",
-        nextPage.toString()
-      );
-    }
+    const defaultPageValue = "page";
+    parsedUrl.searchParams.set(
+      params === true || params.page === true
+        ? defaultPageValue
+        : params.page || defaultPageValue,
+      nextPage.toString()
+    );
 
     return {
       url: parsedUrl.toString(),
@@ -211,8 +202,6 @@ const defaultNext = <Item>({
   url,
   response,
   pageItems,
-  firstPage,
-  firstOffset,
   page,
   limit,
   offset,
@@ -223,8 +212,6 @@ const defaultNext = <Item>({
     url,
     pageItems,
     page,
-    firstPage,
-    firstOffset,
     limit,
     offset,
     params,
@@ -253,15 +240,29 @@ const fetchPaginateIterator = <$Body, Item>(
     parse = defaultParse,
     next = defaultNext,
     until,
-    firstOffset = 0,
-    firstPage = 1,
     fetchOptions,
     getFetch = () => fetch,
   } = options;
 
+  const actualParams: FetchPaginateParamsObject | undefined =
+    params || options.page || options.limit || options.offset
+      ? {
+          ...(params === true ? {} : params),
+        }
+      : undefined;
+
+  if (actualParams) {
+    if (options.page) {
+      actualParams.page = actualParams.page || true;
+    } else if (options.limit || options.offset) {
+      actualParams.limit = actualParams.limit || true;
+      actualParams.offset = actualParams.offset || true;
+    }
+  }
+
   const url = typeof $url === "string" ? $url : $url.toString();
 
-  let { limit, offset = firstOffset, page = firstPage } = options;
+  let { limit, offset = 0, page = 1 } = options;
 
   let pages: $Body[] = [];
   let pageBody: $Body;
@@ -313,12 +314,10 @@ const fetchPaginateIterator = <$Body, Item>(
           url: nextUrl,
           response,
           pageItems,
-          firstPage,
-          firstOffset,
           limit,
           offset,
           page,
-          params,
+          params: actualParams,
           isFirst: count === 0,
         });
 
@@ -391,7 +390,19 @@ const fetchPaginateIterator = <$Body, Item>(
 
         pageItems = getItems<$Body, Item>(pageBody) ?? [];
 
-        items = merge(pages.map((page) => getItems(page)));
+        items = merge(
+          pages.map((page) => {
+            const eachPageItems = getItems<$Body, Item>(page);
+
+            if (!Array.isArray(eachPageItems)) {
+              throw new Error(
+                "`getItems` option applied to a page must yield an array"
+              );
+            }
+
+            return eachPageItems;
+          })
+        );
 
         done = until
           ? await until({

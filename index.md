@@ -1,8 +1,4 @@
-# fetch-paginate
-
 [![npm](https://img.shields.io/npm/v/fetch-paginate.svg)](https://www.npmjs.com/package/fetch-paginate)
-
-> Get multiple pages of results from paginated APIs with `fetch`.
 
 [![npm install fetch-paginate (copy)](https://copyhaste.com/i?t=npm%20install%20fetch-paginate)](https://copyhaste.com/c?t=npm%20install%20fetch-paginate "npm install fetch-paginate (copy)")
 
@@ -135,7 +131,7 @@ await fetchPaginate("https://api.example.com/foo", {
 
 Or you can resolve that `fetch`-like function asynchronously:
 
-````js
+```js
 await fetchPaginate("https://api.example.com/foo", {
   getFetch: async ({ url }) => {
     const cached = await cache.get(url);
@@ -151,7 +147,7 @@ For bundled/browser use `fetch-paginate/bundle` (which includes dependencies, ex
 ```js
 import "cross-fetch/polyfill";
 import fetchPaginate from "fetch-paginate/bundle";
-````
+```
 
 or even with the UMD global (on `window`):
 
@@ -248,7 +244,7 @@ Defaults to `"offset"`.
 
 If using `params` with `page`, this indicates the page at which to start fetching.
 
-Defaults to value of `firstPage`.
+Defaults to `1`.
 
 ### `offset`
 
@@ -256,7 +252,7 @@ Defaults to value of `firstPage`.
 
 If using `params` with `offset` and `limit`, this indicates the offset at which to start fetching.
 
-Defaults to value of `firstOffset`.
+Defaults to `0`.
 
 ### `limit`
 
@@ -265,22 +261,6 @@ Defaults to value of `firstOffset`.
 If using `params` with `offset` and `limit`, this indicates the size of each page.
 
 Defaults to the size of the first page fetched.
-
-### `firstPage`
-
-`number`
-
-The first page index.
-
-Defaults to `1`.
-
-### `firstOffset`
-
-`number`
-
-The first offset index.
-
-Defaults to `0`.
 
 ### `fetchOptions`
 
