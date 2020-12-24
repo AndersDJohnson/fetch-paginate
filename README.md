@@ -1,7 +1,7 @@
 # fetch-paginate
 > Get multiple pages of results from paginated APIs with `fetch`.
 
-[:book: Read the docs!](https://andersdjohnson.github.io/anchorate/)
+[:book: Read the docs!](https://andersdjohnson.github.io/fetch-paginate/)
 
 Fetches multiple pages from paginated APIs with `fetch`
 (using either `Link` headers like GitHub,
