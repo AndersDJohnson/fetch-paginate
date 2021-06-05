@@ -21,7 +21,7 @@ const { items } = await fetchPaginate("https://api.example.com/foo");
 
 Now `items` will be an array of items across all pages (unless you define a custom `merge`).
 
-If the the API returns your results in a nested response, use a custom `getItems` function to select them:
+If the API returns your results array nested in the response, use a custom `getItems` function to select them:
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {
@@ -60,9 +60,7 @@ This also means you can use `break` and `continue` semantics - perhaps as an alt
 ```js
 import { fetchPaginateIterator } from "fetch-paginate";
 
-const myIterator = fetchPaginateIterator("https://api.example.com/foo", {
-  getItems: (body) => body.results,
-});
+const myIterator = fetchPaginateIterator("https://api.example.com/foo");
 
 for await (const { pageItems } of myIterator) {
   console.log(pageItems);
@@ -88,7 +86,7 @@ for await (const { page, response } of myIterator) {
 }
 ```
 
-And also get the final result which has the same shape as `fetchPaginage` (`{ items, pages, responses }`):
+And also get the final result which has the same shape as `fetchPaginate` (`{ items, pages, responses }`):
 
 ```js
 for await (const { pageItems } of myIterator) {
