@@ -1,3 +1,6 @@
 # .kodiak.toml
 version = 1
-update.require_automerge_label = false
+
+[merge]
+
+require_automerge_label = false
