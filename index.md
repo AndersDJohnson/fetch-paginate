@@ -1,6 +1,6 @@
 Fetches multiple pages from paginated APIs with `fetch`
 (using either `Link` headers like GitHub,
-or with `page` or `offset` & `limit` query parameters).
+or with customizable `page` or `offset` & `limit` query parameters).
 
 Also use to search a paginated API until you find your item (see [Async Iterators](#async-iterators) or `until` option).
 
@@ -50,6 +50,87 @@ const { items, pages } = await fetchPaginate<MyBody, MyItem>(
 
 ```js
 fetchPaginate(url, options);
+```
+
+---
+
+To use query parameters instead of `Link` headers, use the `params` option:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: true, // Assumes `page` parameter, where the first page is `1`.
+});
+```
+
+You can customize the name of the `page` parameter, e.g., to `pg`, like:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: {
+    page: 'pg', // Assuming our API expects `?pg=2`, for example.
+  },
+});
+```
+
+If your API uses offset and/or limit parameters instead of page parameter, you can do:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: {
+    offset: true,
+  },
+});
+```
+
+To customize the name of the offset and/or limit parameters, you can do:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: {
+    offset: 'start',
+    limit: 'count',
+  },
+});
+```
+
+If your pages start at a different number, like `0`, use the `page` option:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: true, // Assumes `page` parameter.
+  page: 0,
+});
+```
+
+If you want to start fetching at a later page, use the `page` option:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: true, // Assumes `page` parameter.
+  page: 3, // Start at the 3rd page.
+});
+```
+
+If you want to fetch with a specific number of items per page, instead of defaulting to the size of the first page (requested without `limit`), you can do:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: {
+    offset: true,
+  },
+  limit: 10, // Fetch 10 items per page.
+});
+```
+
+If you want to start fetching at a specific offset:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: {
+    offset: true,
+  },
+  offset: 17, // Start fetching at the 17th item.
+});
 ```
 
 ### Async Iterators
