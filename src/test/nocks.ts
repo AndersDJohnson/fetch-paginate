@@ -4,6 +4,12 @@ export const base = "http://api.example.com";
 
 nock(base).get("/one").times(Infinity).reply(200, '{ "list": ["one"] }');
 
+nock(base, {
+  reqheaders: {
+    Test: 'Yes',
+  },
+}).get("/headers").times(Infinity).reply(200, '{ "list": ["one"] }');
+
 nock(base)
   .get("/linked")
   .times(Infinity)

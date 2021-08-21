@@ -46,6 +46,23 @@ describe("fetchPaginate", () => {
     expect(responses[0]).toMatchObject({ ok: true });
   });
 
+  it("should forward fetch options", async () => {
+    const fetchOptions = { headers: { Test: "Yes" } };
+    const { items } = await fetchPaginateWrapper("http://api.example.com/headers", {
+      fetchOptions
+    });
+    expect(items).toEqual(["one"]);
+  })
+
+  it("should fail to match forwarded fetch options", async () => {
+    const fetchOptions = { headers: { Test: "Nope" } };
+    expect(fetchPaginateWrapper("http://api.example.com/headers", {
+      fetchOptions
+    })).rejects.toMatchObject({
+      message: expect.stringMatching(/No match for request/),
+    })
+  });
+
   describe("Link header", () => {
     it("should return responses when paginated", async () => {
       const { responses } = await fetchPaginateWrapper(linkedUrl);
