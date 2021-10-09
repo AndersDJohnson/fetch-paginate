@@ -8,6 +8,7 @@ import { base } from "./nocks";
 
 const linkedUrl = `${base}/linked`;
 const pagedUrl = `${base}/paged`;
+const paged0Url = `${base}/paged-0`;
 const pagedEmptyEndUrl = `${base}/paged-empty-end`;
 const offsetUrl = `${base}/offset`;
 const offsetLimitUrl = `${base}/offset-limit`;
@@ -107,6 +108,14 @@ describe("fetchPaginate", () => {
   describe("params - page", () => {
     it("should paginate", async () => {
       const { items } = await fetchPaginateWrapper(pagedUrl, { params: true });
+      expect(items).toEqual(["one", "two", "three"]);
+    });
+
+    it("should paginate from page 0", async () => {
+      const { items } = await fetchPaginateWrapper(paged0Url, {
+        params: true,
+        page: 0,
+      });
       expect(items).toEqual(["one", "two", "three"]);
     });
 
