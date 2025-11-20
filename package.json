@@ -13,10 +13,6 @@
   "license": "MIT",
   "repository": "AndersDJohnson/fetch-paginate",
   "funding": "https://github.com/sponsors/AndersDJohnson",
-  "browserslist": [
-    "> .5%",
-    "last 2 versions"
-  ],
   "scripts": {
     "test": "jest",
     "build": "tsc",
