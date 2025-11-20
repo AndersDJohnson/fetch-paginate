@@ -101,7 +101,7 @@ const defaultMerge = <Item>(setOfSetsOfItems: (Item[] | undefined)[]): Item[] =>
     []
   );
 
-const defaultParse = <$Body>(response: Response): Promise<$Body> =>
+const defaultParse = (response: Response): Promise<any> =>
   response.ok && response.status !== 204 ? response.json() : response.text();
 
 const getNextFromLinkHeader = ({
@@ -388,11 +388,11 @@ const fetchPaginateIterator = <$Body, Item>(
 
         pages.push(pageBody);
 
-        pageItems = getItems<$Body, Item>(pageBody) ?? [];
+        pageItems = getItems(pageBody) ?? [];
 
         items = merge(
           pages.map((page) => {
-            const eachPageItems = getItems<$Body, Item>(page);
+            const eachPageItems = getItems(page);
 
             if (!Array.isArray(eachPageItems)) {
               throw new Error(
