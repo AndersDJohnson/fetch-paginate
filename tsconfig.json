@@ -1,10 +1,10 @@
 {
-  "extends": "@sindresorhus/tsconfig",
   "compilerOptions": {
-    "outDir": "dist",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "emitDeclarationOnly": true
+    "declaration": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ESNext",
+    "outDir": "dist"
   },
-  "include": ["src/*", "global.d.ts"]
+  "include": ["src/*"]
 }

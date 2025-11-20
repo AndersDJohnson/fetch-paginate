@@ -2,7 +2,7 @@
   "name": "fetch-paginate",
   "description": "Get multiple pages from paginated APIs with fetch.",
   "version": "6.1.0",
-  "main": "dist/main.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "MIT",
   "repository": "AndersDJohnson/fetch-paginate",
@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "test": "jest",
-    "build": "webpack && tsc",
+    "build": "tsc",
     "prepublish": "yarn build"
   },
   "devDependencies": {
@@ -35,7 +35,7 @@
     "nock": "^12.0.2",
     "prettier": "^2.0.2",
     "ts-jest": "^25.2.1",
-    "typescript": "^3.8.3",
+    "typescript": "^5.9.3",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9",
     "webpack-node-externals": "^1.7.2"
