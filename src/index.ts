@@ -101,7 +101,7 @@ const defaultMerge = <Item>(setOfSetsOfItems: (Item[] | undefined)[]): Item[] =>
     []
   );
 
-const defaultParse = (response: Response): Promise<any> =>
+const defaultParse = (response: Response): Promise<Record<string, unknown> | string> =>
   response.ok && response.status !== 204 ? response.json() : response.text();
 
 const getNextFromLinkHeader = ({
