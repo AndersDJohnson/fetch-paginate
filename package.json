@@ -19,15 +19,13 @@
     "prepublish": "yarn build"
   },
   "devDependencies": {
-    "@types/jest": "^25.1.4",
-    "@types/nock": "^11.1.0",
-    "@types/parse-link-header": "^1.0.0",
+    "@types/parse-link-header": "^2.0.3",
     "cross-fetch": "^3.0.5",
     "eslint": "^5.16.0",
-    "jest": "^25.1.0",
-    "nock": "^12.0.2",
+    "jest": "^30.2.0",
+    "nock": "^14.0.10",
     "prettier": "^2.0.2",
-    "ts-jest": "^25.2.1",
+    "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"
   },
   "dependencies": {
