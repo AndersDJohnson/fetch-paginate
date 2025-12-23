@@ -2,47 +2,33 @@
   "name": "fetch-paginate",
   "description": "Get multiple pages from paginated APIs with fetch.",
   "version": "6.1.0",
-  "main": "dist/main.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "dist/index.js",
   "license": "MIT",
   "repository": "AndersDJohnson/fetch-paginate",
   "funding": "https://github.com/sponsors/AndersDJohnson",
-  "browserslist": [
-    "> .5%",
-    "last 2 versions"
-  ],
   "scripts": {
     "test": "jest",
-    "build": "webpack && tsc",
+    "build": "tsc",
     "prepublish": "yarn build"
   },
   "devDependencies": {
-    "@babel/cli": "^7.6.4",
-    "@babel/core": "^7.6.4",
-    "@babel/node": "^7.6.3",
-    "@babel/plugin-transform-runtime": "^7.6.2",
-    "@babel/polyfill": "^7.6.0",
-    "@babel/preset-env": "^7.6.3",
-    "@babel/preset-typescript": "^7.8.3",
-    "@sindresorhus/tsconfig": "^0.7.0",
-    "@types/jest": "^25.1.4",
-    "@types/nock": "^11.1.0",
-    "@types/parse-link-header": "^1.0.0",
-    "babel-loader": "^8.0.6",
+    "@types/parse-link-header": "^2.0.3",
     "cross-fetch": "^3.0.5",
     "eslint": "^5.16.0",
-    "jest": "^25.1.0",
-    "nock": "^12.0.2",
+    "jest": "^30.2.0",
+    "nock": "^14.0.10",
     "prettier": "^2.0.2",
-    "ts-jest": "^25.2.1",
-    "typescript": "^3.8.3",
-    "webpack": "^4.41.2",
-    "webpack-cli": "^3.3.9",
-    "webpack-node-externals": "^1.7.2"
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@babel/runtime": "^7.6.3",
-    "core-js": "^3.3.3",
     "parse-link-header": "^2.0.0"
   }
 }
