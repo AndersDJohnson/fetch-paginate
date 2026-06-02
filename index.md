@@ -8,7 +8,7 @@ Also use to search a paginated API until you find your item (see [Async Iterator
 - Isomorphic - works in Node and browser<sup>\*</sup>
 - Supports [custom `fetch`](#custom-fetch) wrappers for caching, etc.
 
-_\* For environments without global `fetch` support, a polyfill is required. Recommend `cross-fetch/polyfill`, otherwise `node-fetch` (Node.js) or `whatwg-fetch` (browser). With `node-fetch`, add it globally:_
+_\* For environments without global `fetch` support, a polyfill is required. We recommend `cross-fetch/polyfill`, otherwise `node-fetch` (Node.js) or `whatwg-fetch` (browser). With `node-fetch`, add it globally:_
 ```js
 global.fetch = require('node-fetch');
 ```
