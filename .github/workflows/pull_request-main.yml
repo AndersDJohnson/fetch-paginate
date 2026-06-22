@@ -19,8 +19,6 @@ jobs:
       - uses: actions/setup-node@v1
       - run: yarn install
       - run: yarn build
-        env:
-          CI: true
 
   test:
     # The type of runner that the job will run on
@@ -34,4 +32,3 @@ jobs:
       - run: yarn install
       - run: yarn test
         env:
-          CI: true
