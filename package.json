@@ -19,6 +19,7 @@
     "prepublish": "yarn build"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/parse-link-header": "^2.0.3",
     "cross-fetch": "^3.0.5",
     "eslint": "^5.16.0",
