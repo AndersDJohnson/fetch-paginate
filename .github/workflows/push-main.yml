@@ -16,7 +16,9 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
       - run: yarn install
       - run: yarn build
 
@@ -28,7 +30,9 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
       - run: yarn install
       - run: yarn test
         env:
