@@ -82,13 +82,13 @@ export interface FetchPaginateGraphQLOptions<$Body> {
   query: string;
   operationName?: string;
   /**
-   * Called before each request with the previous page's parsed body
+   * Called before each request with `{ page }`, the previous page's parsed body
    * (`undefined` for the first request). Return the variables for the next call.
    * Pagination stops when a falsy value is returned after the first call,
    * or when the variables are identical to the previous call's.
    */
   variables?: (
-    previous?: $Body
+    options: Pick<FetchPaginateUntilOptions<$Body, any>, "page">
   ) => Record<string, unknown> | null | undefined | false;
 }
 
@@ -333,7 +333,7 @@ const fetchPaginateIterator = <$Body, Item>(
 
         if (graphql) {
           const variables = graphql.variables
-            ? graphql.variables(count === 0 ? undefined : pageBody)
+            ? graphql.variables({ page: count === 0 ? undefined : pageBody })
             : undefined;
 
           if (count > 0 && !variables) {

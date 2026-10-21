@@ -262,9 +262,9 @@ describe("fetchPaginate", () => {
       {
         graphql: {
           query: "query q($page: Int) { products(page: $page) { list nextPage } }",
-          variables: (previous) => {
-            if (!previous) return { type: "blog" };
-            const nextPage = previous.data?.products?.nextPage;
+          variables: ({ page }) => {
+            if (!page) return { type: "blog" };
+            const nextPage = page.data?.products?.nextPage;
             return nextPage ? { type: "blog", page: nextPage } : undefined;
           },
         },
