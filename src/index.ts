@@ -78,7 +78,22 @@ export interface FetchPaginateGetFetchArgs<$Body, Item> {
   };
 }
 
+export interface FetchPaginateGraphQLOptions<$Body> {
+  query: string;
+  operationName?: string;
+  /**
+   * Called before each request with the previous page's parsed body
+   * (`undefined` for the first request). Return the variables for the next call.
+   * Pagination stops when a falsy value is returned after the first call,
+   * or when the variables are identical to the previous call's.
+   */
+  variables?: (
+    previous?: $Body
+  ) => Record<string, unknown> | null | undefined | false;
+}
+
 export interface FetchPaginateOptions<$Body, Item> {
+  graphql?: FetchPaginateGraphQLOptions<$Body>;
   fetchOptions?: ResponseInit;
   until?: FetchPaginateUntilFunction<$Body, Item>;
   getItems?: FetchPaginateItemsFunction<$Body, Item>;
@@ -240,9 +255,13 @@ const fetchPaginateIterator = <$Body, Item>(
     parse = defaultParse,
     next = defaultNext,
     until,
-    fetchOptions,
+    fetchOptions: baseFetchOptions,
     getFetch = () => fetch,
+    graphql,
   } = options;
+
+  let fetchOptions = baseFetchOptions;
+  let prevVariablesJson: string | undefined;
 
   const actualParams: FetchPaginateParamsObject | undefined =
     params || options.page || options.limit || options.offset
@@ -310,16 +329,52 @@ const fetchPaginateIterator = <$Body, Item>(
 
         const prevUrl = nextUrl;
 
-        const nextMeta = await next<Item>({
-          url: nextUrl,
-          response,
-          pageItems,
-          limit,
-          offset,
-          page,
-          params: actualParams,
-          isFirst: count === 0,
-        });
+        let nextMeta: FetchPaginateNext | void;
+
+        if (graphql) {
+          const variables = graphql.variables
+            ? graphql.variables(count === 0 ? undefined : pageBody)
+            : undefined;
+
+          if (count > 0 && !variables) {
+            return makeShortCircuit();
+          }
+
+          const variablesJson = JSON.stringify(variables ?? null);
+
+          if (count > 0 && variablesJson === prevVariablesJson) {
+            return makeShortCircuit();
+          }
+
+          prevVariablesJson = variablesJson;
+
+          fetchOptions = {
+            ...baseFetchOptions,
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(baseFetchOptions?.headers as Record<string, string>),
+            },
+            body: JSON.stringify({
+              query: graphql.query,
+              operationName: graphql.operationName,
+              variables: variables || undefined,
+            }),
+          } as ResponseInit;
+
+          nextMeta = { url };
+        } else {
+          nextMeta = await next<Item>({
+            url: nextUrl,
+            response,
+            pageItems,
+            limit,
+            offset,
+            page,
+            params: actualParams,
+            isFirst: count === 0,
+          });
+        }
 
         if (!nextMeta) {
           return makeShortCircuit();

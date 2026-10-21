@@ -12,3 +12,22 @@ Also use to search a paginated API until you find your item (see [Async Iterator
 - Supports TypeScript.
 - Isomorphic - works in Node and browser<sup>*</sup>
 - Supports [custom `fetch`](https://andersdjohnson.github.io/fetch-paginate/#custom-fetch) wrappers for caching, etc.
+
+## GraphQL
+
+Pass a static `graphql.query` and a `graphql.variables(previous)` function, which receives the previous page's parsed body (`undefined` on the first call). Requests are sent as `POST`. Pagination stops when `variables` returns a falsy value, or the same variables as the previous call.
+
+```ts
+fetchPaginate("https://graphql.example.com", {
+  graphql: {
+    query,
+    variables: (previous) => {
+      if (!previous) return { type: "blog" };
+      const nextPage = previous.data?.products?.nextPage;
+      // return a falsy value to stop paginating
+      return nextPage ? { type: "blog", page: nextPage } : undefined;
+    },
+  },
+  getItems: (body) => body.data.products.items,
+});
+```
