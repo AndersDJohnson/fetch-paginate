@@ -1,11 +1,12 @@
 import "cross-fetch/dist/node-polyfill.js";
 import yargs from "yargs";
 import lodash from "lodash";
-import fetchPaginate, {
+import fetchPaginate from './index.ts';
+import type {
   FetchPaginateOptions,
   FetchPaginateParams,
   FetchPaginateParamsObject,
-} from "./index.js";
+} from "./index.ts";
 
 const program = yargs(process.argv.slice(2))
   .usage("$0 <url>")
