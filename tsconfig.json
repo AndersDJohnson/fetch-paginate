@@ -5,8 +5,11 @@
     "moduleResolution": "bundler",
     "target": "ESNext",
     "outDir": "dist",
+    "rootDir": ".",
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true
   },
-  "include": ["src/*"]
+  "include": ["src/**/*"]
 }
