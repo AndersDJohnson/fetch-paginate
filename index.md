@@ -190,7 +190,7 @@ const myIterator = await fetchPaginateIterator<MyBody, MyItem>(
 ### Custom Fetch
 
 If you want custom fetching behavior like caching,
-you can provide a factory for a custom `fetch`-compatiable function.
+you can provide a factory for a custom `fetch`-compatible function.
 If you return `undefined`, it'll fall back to global `fetch`:
 
 ```js
