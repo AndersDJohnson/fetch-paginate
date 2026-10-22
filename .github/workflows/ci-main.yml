@@ -1,0 +1,30 @@
+name: ci-main
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      # skip for docs
+      - '**.md'
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      # skip for docs
+      - '**.md'
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn build
+      - run: yarn test
+        env:
+          CI: true
