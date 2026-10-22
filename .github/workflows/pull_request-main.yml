@@ -34,4 +34,5 @@ jobs:
         with:
           node-version: lts/*
       - run: yarn install
+      - run: yarn build
       - run: yarn test

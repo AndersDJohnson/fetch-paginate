@@ -1,13 +1,13 @@
-import "cross-fetch/polyfill";
+import "cross-fetch/dist/node-polyfill.js";
 import yargs from "yargs";
-import { get } from "lodash";
+import lodash from "lodash";
 import fetchPaginate, {
   FetchPaginateOptions,
   FetchPaginateParams,
   FetchPaginateParamsObject,
-} from ".";
+} from "./index.js";
 
-const program = yargs()
+const program = yargs(process.argv.slice(2))
   .usage("$0 <url>")
   .option("i", {
     alias: "items",
@@ -38,7 +38,7 @@ if (!url) {
 const options: FetchPaginateOptions<any, any> = {};
 
 if (argv.items) {
-  options.getItems = (page) => get(page, argv.items as "string");
+  options.getItems = (page) => lodash.get(page, argv.items as "string");
 }
 
 if (argv.params) {
