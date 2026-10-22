@@ -138,3 +138,18 @@ nock(base)
   .times(Infinity)
   .query({ offset: "3", limit: "1" })
   .reply(200, '{ "list": [] }');
+
+nock(base)
+  .post("/graphql")
+  .times(Infinity)
+  .reply(200, (_uri, body: any) => {
+    const page = body.variables?.page ?? 1;
+    return {
+      data: {
+        products: {
+          list: [`p${page}`],
+          nextPage: page < 3 ? page + 1 : null,
+        },
+      },
+    };
+  });

@@ -255,4 +255,23 @@ describe("fetchPaginate", () => {
       expect(result.items).toEqual(["one", "two", "three"]);
     });
   });
+
+  it("should paginate graphql with variables from previous page", async () => {
+    const { items, pages } = await fetchPaginate<any, string>(
+      `${base}/graphql`,
+      {
+        graphql: {
+          query: "query q($page: Int) { products(page: $page) { list nextPage } }",
+          variables: ({ page }) => {
+            if (!page) return { type: "blog" };
+            const nextPage = page.data?.products?.nextPage;
+            return nextPage ? { type: "blog", page: nextPage } : undefined;
+          },
+        },
+        getItems: (body) => body.data.products.list,
+      }
+    );
+    expect(pages).toHaveLength(3);
+    expect(items).toEqual(["p1", "p2", "p3"]);
+  });
 });

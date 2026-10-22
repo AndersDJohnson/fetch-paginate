@@ -231,6 +231,26 @@ import "fetch-paginate/bundle";
 const { items } = await fetchPaginate("https://api.example.com/foo");
 ```
 
+### GraphQL
+
+For GraphQL APIs that paginate with a page number or cursor nested in the response body, use the `graphql` option with a static query and a `variables` function.
+Each page is sent as a `POST`, and `variables` is called before each request with `{ page }`, the previous page's parsed body (`undefined` for the first request).
+
+```js
+const { items } = await fetchPaginate("https://graphql.example.com", {
+  graphql: {
+    query,
+    variables: ({ page }) => {
+      if (!page) return { type: "blog" };
+      const nextPage = page.data?.products?.nextPage;
+      // return a falsy value to stop paginating
+      return nextPage ? { type: "blog", page: nextPage } : undefined;
+    },
+  },
+  getItems: (body) => body.data.products.items,
+});
+```
+
 ## Options
 
 ### `getItems`
@@ -347,3 +367,12 @@ Additional options to pass to `fetch`.
 
 A factory that provides a `fetch`-compatible function.
 Use this, e.g., to define your own custom cache wrapper.
+
+### `graphql`
+
+`{ query: string, operationName?: string, variables?: ({ page }) => Object | falsy }`
+
+Paginate a GraphQL API (see [GraphQL](#graphql)).
+Requests are sent as `POST` with a JSON body of `{ query, operationName, variables }`, and `fetchOptions.headers` are merged over the default `Content-Type: application/json`.
+The `next`, `params`, `page`, `limit` and `offset` options are not used.
+Pagination stops when `variables` returns a falsy value after the first call, or the same variables as the previous call.
