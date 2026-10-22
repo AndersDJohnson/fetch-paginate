@@ -5,7 +5,7 @@
 
 Fetches multiple pages from paginated APIs with `fetch`
 (using either `Link` headers like GitHub,
-or with `page` or `offset` & `limit` query parameters).
+or with `page` or `offset` & `limit` query parameters, or with GraphQL).
 
 Also use to search a paginated API until you find your item (see [Async Iterators](https://andersdjohnson.github.io/fetch-paginate/#async-iterators) or `until` option).
 
