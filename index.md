@@ -1,18 +1,6 @@
-# fetch-paginate
-
-[![npm](https://img.shields.io/npm/v/fetch-paginate.svg)](https://www.npmjs.com/package/fetch-paginate)
-
-> Get multiple pages of results from paginated APIs with `fetch`.
-
-[![npm install fetch-paginate (copy)](https://copyhaste.com/i?t=npm%20install%20fetch-paginate)](https://copyhaste.com/c?t=npm%20install%20fetch-paginate "npm install fetch-paginate (copy)")
-
-or:
-
-[![yarn add fetch-paginate (copy)](https://copyhaste.com/i?t=yarn%20add%20fetch-paginate)](https://copyhaste.com/c?t=yarn%20add%20fetch-paginate "yarn add fetch-paginate (copy)")
-
 Fetches multiple pages from paginated APIs with `fetch`
 (using either `Link` headers like GitHub,
-or with `page` or `offset` & `limit` query parameters).
+or with customizable `page` or `offset` & `limit` query parameters).
 
 Also use to search a paginated API until you find your item (see [Async Iterators](#async-iterators) or `until` option).
 
@@ -20,8 +8,10 @@ Also use to search a paginated API until you find your item (see [Async Iterator
 - Isomorphic - works in Node and browser<sup>\*</sup>
 - Supports [custom `fetch`](#custom-fetch) wrappers for caching, etc.
 
-_\* For environments without `fetch` support, a polyfill is required.
-Recommend `cross-fetch/polyfill` or `node-fetch` or `whatwg-fetch`._
+_\* For environments without global `fetch` support, a polyfill is required. Recommend `cross-fetch/polyfill`, otherwise `node-fetch` (Node.js) or `whatwg-fetch` (browser). With `node-fetch`, add it globally:_
+```js
+global.fetch = require('node-fetch');
+```
 
 ## Usage
 
@@ -33,7 +23,7 @@ const { items } = await fetchPaginate("https://api.example.com/foo");
 
 Now `items` will be an array of items across all pages (unless you define a custom `merge`).
 
-If the the API returns your results in a nested response, use a custom `getItems` function to select them:
+If the API returns your results array nested in the response, use a custom `getItems` function to select them:
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {
@@ -62,6 +52,87 @@ const { items, pages } = await fetchPaginate<MyBody, MyItem>(
 fetchPaginate(url, options);
 ```
 
+---
+
+To use query parameters instead of `Link` headers, use the `params` option:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: true, // Assumes `page` parameter, where the first page is `1`.
+});
+```
+
+You can customize the name of the `page` parameter, e.g., to `pg`, like:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: {
+    page: 'pg', // Assuming our API expects `?pg=2`, for example.
+  },
+});
+```
+
+If your API uses offset and/or limit parameters instead of page parameter, you can do:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: {
+    offset: true,
+  },
+});
+```
+
+To customize the name of the offset and/or limit parameters, you can do:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: {
+    offset: 'start',
+    limit: 'count',
+  },
+});
+```
+
+If your pages start at a different number, like `0`, use the `page` option:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: true, // Assumes `page` parameter.
+  page: 0,
+});
+```
+
+If you want to start fetching at a later page, use the `page` option:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: true, // Assumes `page` parameter.
+  page: 3, // Start at the 3rd page.
+});
+```
+
+If you want to fetch with a specific number of items per page, instead of defaulting to the size of the first page (requested without `limit`), you can do:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: {
+    offset: true,
+  },
+  limit: 10, // Fetch 10 items per page.
+});
+```
+
+If you want to start fetching at a specific offset:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: {
+    offset: true,
+  },
+  offset: 17, // Start fetching at the 17th item.
+});
+```
+
 ### Async Iterators
 
 If you want to serially process each page, you can use `fetchPaginateIterator`,
@@ -72,9 +143,7 @@ This also means you can use `break` and `continue` semantics - perhaps as an alt
 ```js
 import { fetchPaginateIterator } from "fetch-paginate";
 
-const myIterator = fetchPaginateIterator("https://api.example.com/foo", {
-  getItems: (body) => body.results,
-});
+const myIterator = fetchPaginateIterator("https://api.example.com/foo");
 
 for await (const { pageItems } of myIterator) {
   console.log(pageItems);
@@ -100,7 +169,7 @@ for await (const { page, response } of myIterator) {
 }
 ```
 
-And also get the final result which has the same shape as `fetchPaginage` (`{ items, pages, responses }`):
+And also get the final result which has the same shape as `fetchPaginate` (`{ items, pages, responses }`):
 
 ```js
 for await (const { pageItems } of myIterator) {
@@ -121,7 +190,7 @@ const myIterator = await fetchPaginateIterator<MyBody, MyItem>(
 ### Custom Fetch
 
 If you want custom fetching behavior like caching,
-you can provide a factory for a custom `fetch`-compatiable function.
+you can provide a factory for a custom `fetch`-compatible function.
 If you return `undefined`, it'll fall back to global `fetch`:
 
 ```js
@@ -160,6 +229,26 @@ import "cross-fetch/polyfill";
 import "fetch-paginate/bundle";
 
 const { items } = await fetchPaginate("https://api.example.com/foo");
+```
+
+### GraphQL
+
+For GraphQL APIs that paginate with a page number or cursor nested in the response body, use the `graphql` option with a static query and a `variables` function.
+Each page is sent as a `POST`, and `variables` is called before each request with `{ page }`, the previous page's parsed body (`undefined` for the first request).
+
+```js
+const { items } = await fetchPaginate("https://graphql.example.com", {
+  graphql: {
+    query,
+    variables: ({ page }) => {
+      if (!page) return { type: "blog" };
+      const nextPage = page.data?.products?.nextPage;
+      // return a falsy value to stop paginating
+      return nextPage ? { type: "blog", page: nextPage } : undefined;
+    },
+  },
+  getItems: (body) => body.data.products.items,
+});
 ```
 
 ## Options
@@ -278,3 +367,12 @@ Additional options to pass to `fetch`.
 
 A factory that provides a `fetch`-compatible function.
 Use this, e.g., to define your own custom cache wrapper.
+
+### `graphql`
+
+`{ query: string, operationName?: string, variables?: ({ page }) => Object | falsy }`
+
+Paginate a GraphQL API (see [GraphQL](#graphql)).
+Requests are sent as `POST` with a JSON body of `{ query, operationName, variables }`, and `fetchOptions.headers` are merged over the default `Content-Type: application/json`.
+The `next`, `params`, `page`, `limit` and `offset` options are not used.
+Pagination stops when `variables` returns a falsy value after the first call, or the same variables as the previous call.

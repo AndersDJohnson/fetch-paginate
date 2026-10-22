@@ -7,7 +7,7 @@ import fetchPaginate, {
   FetchPaginateParamsObject,
 } from ".";
 
-const program = yargs
+const program = yargs()
   .usage("$0 <url>")
   .option("i", {
     alias: "items",
@@ -26,9 +26,9 @@ const program = yargs
   .option("params.limit", {})
   .option("params.offset", {});
 
-const argv = program.argv;
+const argv = program.argv as Exclude<typeof program.argv, Promise<unknown>>;
 
-const url = argv._[0];
+const url = argv._[0]?.toString();
 
 if (!url) {
   program.showHelp();

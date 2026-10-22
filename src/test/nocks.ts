@@ -4,6 +4,12 @@ export const base = "http://api.example.com";
 
 nock(base).get("/one").times(Infinity).reply(200, '{ "list": ["one"] }');
 
+nock(base, {
+  reqheaders: {
+    Test: 'Yes',
+  },
+}).get("/headers").times(Infinity).reply(200, '{ "list": ["one"] }');
+
 nock(base)
   .get("/linked")
   .times(Infinity)
@@ -43,6 +49,24 @@ nock(base)
   .get("/paged")
   .times(Infinity)
   .query({ page: "4" })
+  .reply(404);
+
+nock(base)
+  .get("/paged-0")
+  .query({ page: "0" })
+  .times(Infinity)
+  .reply(200, '{ "list": ["one"] }')
+  .get("/paged-0")
+  .times(Infinity)
+  .query({ page: "1" })
+  .reply(200, '{ "list": ["two"] }')
+  .get("/paged-0")
+  .times(Infinity)
+  .query({ page: "2" })
+  .reply(200, '{ "list": ["three"] }')
+  .get("/paged-0")
+  .times(Infinity)
+  .query({ page: "3" })
   .reply(404);
 
 nock(base)
@@ -114,3 +138,18 @@ nock(base)
   .times(Infinity)
   .query({ offset: "3", limit: "1" })
   .reply(200, '{ "list": [] }');
+
+nock(base)
+  .post("/graphql")
+  .times(Infinity)
+  .reply(200, (_uri, body: any) => {
+    const page = body.variables?.page ?? 1;
+    return {
+      data: {
+        products: {
+          list: [`p${page}`],
+          nextPage: page < 3 ? page + 1 : null,
+        },
+      },
+    };
+  });

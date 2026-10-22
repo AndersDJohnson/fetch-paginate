@@ -8,6 +8,7 @@ import { base } from "./nocks";
 
 const linkedUrl = `${base}/linked`;
 const pagedUrl = `${base}/paged`;
+const paged0Url = `${base}/paged-0`;
 const pagedEmptyEndUrl = `${base}/paged-empty-end`;
 const offsetUrl = `${base}/offset`;
 const offsetLimitUrl = `${base}/offset-limit`;
@@ -44,6 +45,23 @@ describe("fetchPaginate", () => {
       "http://api.example.com/one"
     );
     expect(responses[0]).toMatchObject({ ok: true });
+  });
+
+  it("should forward fetch options", async () => {
+    const fetchOptions = { headers: { Test: "Yes" } };
+    const { items } = await fetchPaginateWrapper("http://api.example.com/headers", {
+      fetchOptions
+    });
+    expect(items).toEqual(["one"]);
+  })
+
+  it("should fail to match forwarded fetch options", async () => {
+    const fetchOptions = { headers: { Test: "Nope" } };
+    expect(fetchPaginateWrapper("http://api.example.com/headers", {
+      fetchOptions
+    })).rejects.toMatchObject({
+      message: expect.stringMatching(/No match for request/),
+    })
   });
 
   describe("Link header", () => {
@@ -107,6 +125,14 @@ describe("fetchPaginate", () => {
   describe("params - page", () => {
     it("should paginate", async () => {
       const { items } = await fetchPaginateWrapper(pagedUrl, { params: true });
+      expect(items).toEqual(["one", "two", "three"]);
+    });
+
+    it("should paginate from page 0", async () => {
+      const { items } = await fetchPaginateWrapper(paged0Url, {
+        params: true,
+        page: 0,
+      });
       expect(items).toEqual(["one", "two", "three"]);
     });
 
@@ -228,5 +254,24 @@ describe("fetchPaginate", () => {
 
       expect(result.items).toEqual(["one", "two", "three"]);
     });
+  });
+
+  it("should paginate graphql with variables from previous page", async () => {
+    const { items, pages } = await fetchPaginate<any, string>(
+      `${base}/graphql`,
+      {
+        graphql: {
+          query: "query q($page: Int) { products(page: $page) { list nextPage } }",
+          variables: ({ page }) => {
+            if (!page) return { type: "blog" };
+            const nextPage = page.data?.products?.nextPage;
+            return nextPage ? { type: "blog", page: nextPage } : undefined;
+          },
+        },
+        getItems: (body) => body.data.products.list,
+      }
+    );
+    expect(pages).toHaveLength(3);
+    expect(items).toEqual(["p1", "p2", "p3"]);
   });
 });
