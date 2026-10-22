@@ -10,11 +10,11 @@ app.get("/pages", (req, res) => {
   const page = (req.query.page as string) ?? "1";
 
   if (page === "1") {
-    res.json({
+    return res.json({
       items: [{ name: "one" }, { name: "two" }],
     });
   } else if (page === "2") {
-    res.json({
+    return res.json({
       items: [{ name: "three" }, { name: "four" }],
     });
   }
@@ -26,11 +26,11 @@ app.get("/pg", (req, res) => {
   const page = (req.query.pg as string) ?? "1";
 
   if (page === "1") {
-    res.json({
+    return res.json({
       items: [{ name: "one" }, { name: "two" }],
     });
   } else if (page === "2") {
-    res.json({
+    return res.json({
       items: [{ name: "three" }, { name: "four" }],
     });
   }
@@ -55,7 +55,7 @@ app.get("/offset", (req, res) => {
   );
 
   if (sliced.length) {
-    res.json({
+    return res.json({
       items: sliced,
     });
   }
@@ -73,7 +73,7 @@ app.get("/ofs", (req, res) => {
   );
 
   if (sliced.length) {
-    res.json({
+    return res.json({
       items: sliced,
     });
   }
