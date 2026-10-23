@@ -258,11 +258,7 @@ describe("fetchPaginate", () => {
 
   it("should paginate with next URL from response body", async () => {
     const { items, pages } = await fetchPaginateWrapper(`${base}/hateoas`, {
-      next: ({ url, body, isFirst }: any) => {
-        if (isFirst) return { url };
-        const href = body?._links?.next?.href;
-        return href ? { url: new URL(href, url).toString() } : undefined;
-      },
+      next: ({ body }: any) => body?._links?.next?.href,
     });
     expect(pages).toHaveLength(3);
     expect(items).toEqual(["one", "two", "three"]);

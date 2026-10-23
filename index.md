@@ -317,22 +317,17 @@ Defaults to always return `false` - to continue to consume until all pages:
 
 ### `next`
 
-`(args: { url, response, body, pageItems, page, limit, offset, params, isFirst }) => { url?, page?, limit?, offset? } | void`
+`(args: { response, body, pageItems, page, limit, offset }) => string | void | Promise<string | void>`
 
-A function that determines the next request, called before each request (with `isFirst: true` before the first). Return an object with the next `url` (or `page`, `limit`, `offset`), or a falsy value to stop paginating. On the first call, return `{ url }` to request the original URL. `body` is the parsed body of the previous page (`undefined` on the first call).
+A function that returns the URL of the next page, or a falsy value to stop paginating. It is called only after a page has been fetched, never before the first request, which always uses the original URL. `body` is the parsed body of the page just fetched. The returned URL may be relative; it is resolved against the URL of the page just fetched.
 
-Defaults to using `params`, or else the `Link` header's `rel="next"`.
+When omitted, the next page is determined from `params`, or else the `Link` header's `rel="next"`.
 
 For example, to follow a next link in the response body, as in HATEOAS APIs:
 
 ```js
 fetchPaginate("https://api.example.com/orders", {
-  next: ({ url, body, isFirst }) => {
-    if (isFirst) return { url };
-    const href = body?._links?.next?.href;
-    // resolve relative links against the current URL
-    return href ? { url: new URL(href, url).toString() } : undefined;
-  },
+  next: ({ body }) => body?._links?.next?.href,
 });
 ```
 
