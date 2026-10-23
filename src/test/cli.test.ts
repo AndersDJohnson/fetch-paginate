@@ -29,12 +29,41 @@ const server: Server = createServer(
       return;
     }
 
+    if (url.pathname === "/graphql") {
+      let body = "";
+      request.setEncoding("utf8");
+      request.on("data", (chunk: string) => {
+        body += chunk;
+      });
+      request.on("end", () => {
+        const { query, variables } = JSON.parse(body);
+        const cursor = variables?.cursor;
+        graphqlRequests.push({ query, cursor });
+        const page =
+          cursor === "cursor-1" ? 2 : cursor === "cursor-2" ? 3 : 1;
+
+        response.writeHead(200, { "Content-Type": "application/json" });
+        response.end(
+          JSON.stringify({
+            data: {
+              products: {
+                nodes: [`product-${page}`],
+                pageInfo: { endCursor: page < 3 ? `cursor-${page}` : null },
+              },
+            },
+          })
+        );
+      });
+      return;
+    }
+
     response.writeHead(404);
     response.end();
   }
 );
 
 const requests: string[] = [];
+const graphqlRequests: Array<{ query: string; cursor?: string }> = [];
 let baseUrl: string;
 
 const runCli = (
@@ -102,6 +131,32 @@ describe("CLI", () => {
     expect(result.code).toBe(0);
     expect(result.stdout).toContain("'nested-item'");
     expect(result.stdout).not.toContain("not an item");
+  });
+
+  it("paginates GraphQL responses using a query and cursor path", async () => {
+    graphqlRequests.length = 0;
+    const query =
+      "query Products($cursor: String) { products(after: $cursor) { nodes pageInfo { endCursor } } }";
+
+    const result = await runCli([
+      `${baseUrl}/graphql`,
+      "--graphql",
+      query,
+      "--cursor",
+      "data.products.pageInfo.endCursor",
+      "-i",
+      "data.products.nodes",
+    ]);
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("'product-1'");
+    expect(result.stdout).toContain("'product-2'");
+    expect(result.stdout).toContain("'product-3'");
+    expect(graphqlRequests).toEqual([
+      { query, cursor: undefined },
+      { query, cursor: "cursor-1" },
+      { query, cursor: "cursor-2" },
+    ]);
   });
 
   it("prints help and exits with an error when the URL is missing", async () => {

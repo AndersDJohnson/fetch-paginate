@@ -23,6 +23,13 @@ const program = yargs(process.argv.slice(2))
   .option("p", {
     alias: "page",
   })
+  .option("g", {
+    alias: "graphql",
+    type: "string",
+  })
+  .option("cursor", {
+    type: "string",
+  })
   .option("params.page", {})
   .option("params.limit", {})
   .option("params.offset", {});
@@ -57,6 +64,13 @@ if (argv.params) {
 options.page = argv.page ? parseInt(argv.page as string, 10) : undefined;
 options.limit = argv.limit ? parseInt(argv.limit as string, 10) : undefined;
 options.offset = argv.offset ? parseInt(argv.offset as string, 10) : undefined;
+
+if (argv.graphql) {
+  options.graphql = {
+    query: argv.graphql as string,
+    cursor: argv.cursor as string | undefined,
+  };
+}
 
 (async () => {
   const res = await fetchPaginate(url, options);

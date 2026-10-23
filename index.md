@@ -256,6 +256,15 @@ const { items } = await fetchPaginate("https://graphql.example.com", {
 });
 ```
 
+The CLI accepts the query with `--graphql` and the cursor response path with `--cursor`:
+
+```sh
+node dist/cli.js https://graphql.example.com \
+  --graphql 'query Products($cursor: String) { products(first: 10, after: $cursor) { nodes { id name } pageInfo { endCursor } } }' \
+  --cursor data.products.pageInfo.endCursor \
+  --items data.products.nodes
+```
+
 Alternatively, return a string from `variables` to use it as the cursor value (`{ cursor: returnedString }`). As before, return an object to provide other GraphQL variables, or a falsy value to stop paginating after the first call:
 
 ```js
