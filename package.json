@@ -9,6 +9,9 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "bin": {
+    "fetch-paginate": "./dist/cli.js"
+  },
   "main": "dist/index.js",
   "license": "MIT",
   "repository": "AndersDJohnson/fetch-paginate",

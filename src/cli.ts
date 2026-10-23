@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import "cross-fetch/dist/node-polyfill.js";
 import yargs from "yargs";
 import lodash from "lodash";

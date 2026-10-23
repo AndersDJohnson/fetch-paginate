@@ -273,17 +273,16 @@ If both `cursor` and `variables` are provided, an object returned by `variables`
 
 ### CLI
 
-Build the project, then run the CLI with the API URL and any pagination options:
+Run the CLI with `npx` (or `yarn dlx`) and provide the API URL and any pagination options:
 
 ```sh
-yarn build
-node dist/cli.js https://api.example.com/foo --items data.results --params.page
+npx fetch-paginate https://api.example.com/foo --items data.results --params.page
 ```
 
 For offset-based pagination, set the starting offset and page size as needed:
 
 ```sh
-node dist/cli.js https://api.example.com/foo \
+npx fetch-paginate https://api.example.com/foo \
   --params.offset start --params.limit count \
   --offset 20 --limit 10 --items data.results
 ```
@@ -302,7 +301,7 @@ The CLI supports these options:
 - `--cursor <path>`: Dot-separated path to the next cursor in the previous GraphQL response body. The query should use a `$cursor` variable. For example:
 
   ```sh
-  node dist/cli.js https://graphql.example.com \
+  npx fetch-paginate https://graphql.example.com \
     --graphql 'query Products($cursor: String) { products(first: 10, after: $cursor) { nodes { id name } pageInfo { endCursor } } }' \
     --cursor data.products.pageInfo.endCursor \
     --items data.products.nodes
@@ -310,7 +309,7 @@ The CLI supports these options:
 
 The CLI supports a query and cursor path for GraphQL, but does not currently provide an option for arbitrary GraphQL variables. Without `--params.*` or `--graphql`, it follows pagination links in response headers.
 
-Run `node dist/cli.js --help` for the complete options list.
+Run `npx fetch-paginate --help` for the complete options list.
 
 ## Options
 
