@@ -17,9 +17,10 @@ export interface FetchPaginateUntilOptions<$Body, Item> {
   responses: Response[];
 }
 
-export interface FetchPaginateNextOptions<Item> {
+export interface FetchPaginateNextOptions<Item, $Body = any> {
   url: string;
   response?: Response;
+  body?: $Body;
   pageItems: Item[];
   page: number;
   limit?: number;
@@ -45,8 +46,8 @@ export type FetchPaginateMergeFunction<Item> = (
 export type FetchPaginateParseFunction<$Body> = (
   response: Response
 ) => Promise<$Body> | $Body;
-export type FetchPaginateNextFunction<Item> = (
-  nextOptions: FetchPaginateNextOptions<Item>
+export type FetchPaginateNextFunction<Item, $Body = any> = (
+  nextOptions: FetchPaginateNextOptions<Item, $Body>
 ) => FetchPaginateNext;
 
 export interface FetchPaginateIteratorValue<$Body, Item> {
@@ -106,7 +107,7 @@ export interface FetchPaginateOptions<$Body, Item> {
   getItems?: FetchPaginateItemsFunction<$Body, Item>;
   merge?: FetchPaginateMergeFunction<Item>;
   parse?: FetchPaginateParseFunction<$Body>;
-  next?: FetchPaginateNextFunction<Item>;
+  next?: FetchPaginateNextFunction<Item, $Body>;
   limit?: number;
   offset?: number;
   params?: FetchPaginateParams;
@@ -407,6 +408,7 @@ const fetchPaginateIterator = <$Body, Item>(
           nextMeta = await next<Item>({
             url: nextUrl,
             response,
+            body: count === 0 ? undefined : pageBody,
             pageItems,
             limit,
             offset,

@@ -169,3 +169,20 @@ nock(base)
       },
     };
   });
+
+nock(base)
+  .get("/hateoas")
+  .times(Infinity)
+  .reply(200, {
+    list: ["one"],
+    _links: { next: { href: "/hateoas/2" } },
+  })
+  .get("/hateoas/2")
+  .times(Infinity)
+  .reply(200, {
+    list: ["two"],
+    _links: { next: { href: "/hateoas/3" } },
+  })
+  .get("/hateoas/3")
+  .times(Infinity)
+  .reply(200, { list: ["three"], _links: {} });

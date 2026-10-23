@@ -256,6 +256,18 @@ describe("fetchPaginate", () => {
     });
   });
 
+  it("should paginate with next URL from response body", async () => {
+    const { items, pages } = await fetchPaginateWrapper(`${base}/hateoas`, {
+      next: ({ url, body, isFirst }: any) => {
+        if (isFirst) return { url };
+        const href = body?._links?.next?.href;
+        return href ? { url: new URL(href, url).toString() } : undefined;
+      },
+    });
+    expect(pages).toHaveLength(3);
+    expect(items).toEqual(["one", "two", "three"]);
+  });
+
   it("should paginate graphql with variables from previous page", async () => {
     const { items, pages } = await fetchPaginate<any, string>(
       `${base}/graphql`,
