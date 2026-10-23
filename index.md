@@ -273,7 +273,7 @@ If both `cursor` and `variables` are provided, an object returned by `variables`
 
 ### CLI
 
-Run the CLI with `npx` (or `yarn dlx`) and provide the API URL and any pagination options:
+Run the CLI with `npx` (or `yarn dlx` or `pnx`/`pnpx`/`pnpm dlx`) and provide the API URL and any pagination options:
 
 ```sh
 npx fetch-paginate https://api.example.com/foo --items data.results --params.page
