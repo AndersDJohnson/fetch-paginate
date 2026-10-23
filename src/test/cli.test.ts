@@ -1,69 +1,8 @@
 import { spawn } from "node:child_process";
-import { createServer, IncomingMessage, Server, ServerResponse } from "node:http";
-import { AddressInfo } from "node:net";
 import { resolve } from "node:path";
+import { startServer } from "./server";
 
-const server: Server = createServer(
-  (request: IncomingMessage, response: ServerResponse) => {
-    const url = new URL(request.url ?? "/", "http://localhost");
-
-    if (url.pathname === "/pages") {
-      const page = url.searchParams.get("page") ?? "1";
-      requests.push(page);
-      const items: string[] =
-        page === "1" ? ["one"] : page === "2" ? ["two"] : [];
-
-      response.writeHead(200, { "Content-Type": "application/json" });
-      response.end(JSON.stringify({ data: { items }, ignored: "not an item" }));
-      return;
-    }
-
-    if (url.pathname === "/nested") {
-      response.writeHead(200, { "Content-Type": "application/json" });
-      response.end(
-        JSON.stringify({
-          payload: { results: ["nested-item"] },
-          ignored: "not an item",
-        })
-      );
-      return;
-    }
-
-    if (url.pathname === "/graphql") {
-      let body = "";
-      request.setEncoding("utf8");
-      request.on("data", (chunk: string) => {
-        body += chunk;
-      });
-      request.on("end", () => {
-        const { query, variables } = JSON.parse(body);
-        const cursor = variables?.cursor;
-        graphqlRequests.push({ query, cursor });
-        const page =
-          cursor === "cursor-1" ? 2 : cursor === "cursor-2" ? 3 : 1;
-
-        response.writeHead(200, { "Content-Type": "application/json" });
-        response.end(
-          JSON.stringify({
-            data: {
-              products: {
-                nodes: [`product-${page}`],
-                pageInfo: { endCursor: page < 3 ? `cursor-${page}` : null },
-              },
-            },
-          })
-        );
-      });
-      return;
-    }
-
-    response.writeHead(404);
-    response.end();
-  }
-);
-
-const requests: string[] = [];
-const graphqlRequests: Array<{ query: string; cursor?: string }> = [];
+let testServer: Awaited<ReturnType<typeof startServer>>;
 let baseUrl: string;
 
 const runCli = (
@@ -88,28 +27,23 @@ const runCli = (
     child.on("close", (code) => resolveRun({ code, stdout, stderr }));
   });
 
-beforeAll(
-  () =>
-    new Promise<void>((resolveListen, rejectListen) => {
-      server.once("error", rejectListen);
-      server.listen(0, "127.0.0.1", () => {
-        const address = server.address() as AddressInfo;
-        baseUrl = `http://127.0.0.1:${address.port}`;
-        resolveListen();
-      });
-    })
-);
+beforeAll(async () => {
+  testServer = await startServer(0);
+  baseUrl = testServer.url;
+});
 
 afterAll(
   () =>
     new Promise<void>((resolveClose, rejectClose) => {
-      server.close((error) => (error ? rejectClose(error) : resolveClose()));
+      testServer.server.close((error) =>
+        error ? rejectClose(error) : resolveClose()
+      );
     })
 );
 
 describe("CLI", () => {
   it("paginates through responses and extracts items from a nested path", async () => {
-    requests.length = 0;
+    testServer.requests.length = 0;
 
     const result = await runCli([
       `${baseUrl}/pages`,
@@ -122,7 +56,7 @@ describe("CLI", () => {
     expect(result.stdout).toContain("'one'");
     expect(result.stdout).toContain("'two'");
     expect(result.stdout).not.toContain("not an item");
-    expect(requests).toEqual(["1", "2", "3"]);
+    expect(testServer.requests).toEqual(["1", "2", "3"]);
   });
 
   it("extracts items with -i from a nested response path", async () => {
@@ -134,7 +68,7 @@ describe("CLI", () => {
   });
 
   it("paginates GraphQL responses using a query and cursor path", async () => {
-    graphqlRequests.length = 0;
+    testServer.graphqlRequests.length = 0;
     const query =
       "query Products($cursor: String) { products(after: $cursor) { nodes pageInfo { endCursor } } }";
 
@@ -152,7 +86,7 @@ describe("CLI", () => {
     expect(result.stdout).toContain("'product-1'");
     expect(result.stdout).toContain("'product-2'");
     expect(result.stdout).toContain("'product-3'");
-    expect(graphqlRequests).toEqual([
+    expect(testServer.graphqlRequests).toEqual([
       { query, cursor: undefined },
       { query, cursor: "cursor-1" },
       { query, cursor: "cursor-2" },
