@@ -48,7 +48,7 @@ export type FetchPaginateParseFunction<$Body> = (
 ) => Promise<$Body> | $Body;
 export type FetchPaginateNextFunction<Item, $Body = any> = (
   nextOptions: FetchPaginateNextOptions<Item, $Body>
-) => FetchPaginateNext;
+) => FetchPaginateNext | string | void | undefined;
 
 export interface FetchPaginateIteratorValue<$Body, Item> {
   page?: $Body;
@@ -107,7 +107,8 @@ export interface FetchPaginateOptions<$Body, Item> {
   getItems?: FetchPaginateItemsFunction<$Body, Item>;
   merge?: FetchPaginateMergeFunction<Item>;
   parse?: FetchPaginateParseFunction<$Body>;
-  next?: FetchPaginateNextFunction<Item, $Body>;
+  next?: FetchPaginateNextFunction<Item, $Body> | string;
+  nextHateoas?: boolean;
   limit?: number;
   offset?: number;
   params?: FetchPaginateParams;
@@ -273,12 +274,15 @@ const fetchPaginateIterator = <$Body, Item>(
     getItems = defaultGetItems,
     merge = defaultMerge,
     parse = defaultParse,
-    next = defaultNext,
+    nextHateoas,
     until,
     fetchOptions: baseFetchOptions,
     getFetch = () => fetch,
     graphql,
   } = options;
+
+  const next: FetchPaginateNextFunction<Item, $Body> | string =
+    options.next ?? (nextHateoas ? "_links.next.href" : defaultNext);
 
   let fetchOptions = baseFetchOptions;
   let prevVariablesJson: string | undefined;
@@ -405,17 +409,31 @@ const fetchPaginateIterator = <$Body, Item>(
 
           nextMeta = { url };
         } else {
-          nextMeta = await next<Item>({
-            url: nextUrl,
-            response,
-            body: count === 0 ? undefined : pageBody,
-            pageItems,
-            limit,
-            offset,
-            page,
-            params: actualParams,
-            isFirst: count === 0,
-          });
+          const isFirst = count === 0;
+          const body = isFirst ? undefined : pageBody;
+
+          const nextResult =
+            typeof next === "string"
+              ? getPath(body, next)
+              : await next({
+                  url: nextUrl,
+                  response,
+                  body,
+                  pageItems,
+                  limit,
+                  offset,
+                  page,
+                  params: actualParams,
+                  isFirst,
+                });
+
+          if (typeof nextResult === "string" && nextResult) {
+            nextMeta = { url: new URL(nextResult, nextUrl).toString() };
+          } else if (nextResult && typeof nextResult === "object") {
+            nextMeta = nextResult;
+          } else if (isFirst && next !== defaultNext) {
+            nextMeta = { url };
+          }
         }
 
         if (!nextMeta) {

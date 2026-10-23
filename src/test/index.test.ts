@@ -268,6 +268,34 @@ describe("fetchPaginate", () => {
     expect(items).toEqual(["one", "two", "three"]);
   });
 
+  it("should paginate with next returning a url string", async () => {
+    const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
+      next: ({ body }: any) => body?._links?.next?.href,
+    });
+    expect(items).toEqual(["one", "two", "three"]);
+  });
+
+  it("should paginate with next as a body path", async () => {
+    const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
+      next: "_links.next.href",
+    });
+    expect(items).toEqual(["one", "two", "three"]);
+  });
+
+  it("should paginate with nextHateoas", async () => {
+    const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
+      nextHateoas: true,
+    });
+    expect(items).toEqual(["one", "two", "three"]);
+  });
+
+  it("should stop when next path is missing", async () => {
+    const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
+      next: "_links.nope.href",
+    });
+    expect(items).toEqual(["one"]);
+  });
+
   it("should paginate graphql with variables from previous page", async () => {
     const { items, pages } = await fetchPaginate<any, string>(
       `${base}/graphql`,

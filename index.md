@@ -317,9 +317,14 @@ Defaults to always return `false` - to continue to consume until all pages:
 
 ### `next`
 
-`(args: { url, response, body, pageItems, page, limit, offset, params, isFirst }) => { url?, page?, limit?, offset? } | void`
+`string | (args: { url, response, body, pageItems, page, limit, offset, params, isFirst }) => string | { url?, page?, limit?, offset? } | void`
 
-A function that determines the next request, called before each request (with `isFirst: true` before the first). Return an object with the next `url` (or `page`, `limit`, `offset`), or a falsy value to stop paginating. On the first call, return `{ url }` to request the original URL. `body` is the parsed body of the previous page (`undefined` on the first call).
+Determines the next request. Either:
+
+- a **function**, called before each request (with `isFirst: true` before the first). Return the next URL as a string, or an object with the next `url` (or `page`, `limit`, `offset`), or a falsy value to stop paginating. If it returns a falsy value on the first call, the original `url` is requested. `body` is the parsed body of the previous page (`undefined` on the first call).
+- a **string**, a dot-separated path (e.g. `"_links.next.href"`) to the next URL in the previous page's parsed body. Missing values stop pagination.
+
+Returned URL strings may be relative; they are resolved against the previous request URL.
 
 Defaults to using `params`, or else the `Link` header's `rel="next"`.
 
@@ -327,13 +332,23 @@ For example, to follow a next link in the response body, as in HATEOAS APIs:
 
 ```js
 fetchPaginate("https://api.example.com/orders", {
-  next: ({ url, body, isFirst }) => {
-    if (isFirst) return { url };
-    const href = body?._links?.next?.href;
-    // resolve relative links against the current URL
-    return href ? { url: new URL(href, url).toString() } : undefined;
-  },
+  next: ({ body }) => body?._links?.next?.href,
 });
+
+// or equivalently
+fetchPaginate("https://api.example.com/orders", {
+  next: "_links.next.href",
+});
+```
+
+### `nextHateoas`
+
+`boolean`
+
+Shorthand: when `true` and `next` is not set, `next` defaults to `"_links.next.href"`.
+
+```js
+fetchPaginate("https://api.example.com/orders", { nextHateoas: true });
 ```
 
 ### `params`
