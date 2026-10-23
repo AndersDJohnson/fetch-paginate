@@ -233,23 +233,43 @@ const { items } = await fetchPaginate("https://api.example.com/foo");
 
 ### GraphQL
 
-For GraphQL APIs that paginate with a page number or cursor nested in the response body, use the `graphql` option with a static query and a `variables` function.
-Each page is sent as a `POST`, and `variables` is called before each request with `{ page }`, the previous page's parsed body (`undefined` for the first request).
+For GraphQL APIs that use cursor pagination, declare and use a `$cursor` variable in the query. See [GraphQL cursor pagination](https://graphql.org/learn/pagination/) for more about the concept.
+
+```graphql
+query Products($cursor: String) {
+  products(first: 10, after: $cursor) {
+    nodes { id name }
+    pageInfo { endCursor hasNextPage }
+  }
+}
+```
+
+Use `cursor` to specify a dot-separated path to the next cursor in the previous page's parsed response body. The first request has no cursor value:
 
 ```js
 const { items } = await fetchPaginate("https://graphql.example.com", {
   graphql: {
     query,
-    variables: ({ page }) => {
-      if (!page) return { type: "blog" };
-      const nextPage = page.data?.products?.nextPage;
-      // return a falsy value to stop paginating
-      return nextPage ? { type: "blog", page: nextPage } : undefined;
-    },
+    cursor: "data.products.pageInfo.endCursor",
   },
-  getItems: (body) => body.data.products.items,
+  getItems: (body) => body.data.products.nodes,
 });
 ```
+
+Alternatively, return a string from `variables` to use it as the cursor value (`{ cursor: returnedString }`). As before, return an object to provide other GraphQL variables, or a falsy value to stop paginating after the first call:
+
+```js
+const { items } = await fetchPaginate("https://graphql.example.com", {
+  graphql: {
+    query,
+    variables: ({ page }) =>
+      page?.data?.products?.pageInfo?.endCursor,
+  },
+  getItems: (body) => body.data.products.nodes,
+});
+```
+
+If both `cursor` and `variables` are provided, an object returned by `variables` is merged with the path cursor, which takes precedence. A string returned by `variables` is ignored in favor of the path cursor.
 
 ## Options
 
@@ -370,9 +390,9 @@ Use this, e.g., to define your own custom cache wrapper.
 
 ### `graphql`
 
-`{ query: string, operationName?: string, variables?: ({ page }) => Object | falsy }`
+`{ query: string, operationName?: string, cursor?: string, variables?: ({ page }) => string | Object | falsy }`
 
 Paginate a GraphQL API (see [GraphQL](#graphql)).
 Requests are sent as `POST` with a JSON body of `{ query, operationName, variables }`, and `fetchOptions.headers` are merged over the default `Content-Type: application/json`.
 The `next`, `params`, `page`, `limit` and `offset` options are not used.
-Pagination stops when `variables` returns a falsy value after the first call, or the same variables as the previous call.
+`cursor` is a dot-separated path into the previous page's parsed response body; pagination stops when it resolves to a falsy value after the first request. A string returned by `variables` is sent as the `cursor` variable. An object is sent as the variables object, unless `cursor` is also set, in which case it is merged with the path cursor and the path value wins. Pagination also stops when `variables` returns a falsy value after the first call, or when the variables are identical to the previous call.
