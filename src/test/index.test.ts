@@ -282,11 +282,18 @@ describe("fetchPaginate", () => {
     expect(items).toEqual(["one", "two", "three"]);
   });
 
-  it("should paginate with nextHateoas", async () => {
+  it("should paginate with hateoas", async () => {
     const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
-      nextHateoas: true,
+      hateoas: true,
     });
     expect(items).toEqual(["one", "two", "three"]);
+  });
+
+  it("should paginate with hateoas links name", async () => {
+    const { items } = await fetchPaginateWrapper(`${base}/hateoas-links`, {
+      hateoas: "links",
+    });
+    expect(items).toEqual(["one", "two"]);
   });
 
   it("should stop when next path is missing", async () => {

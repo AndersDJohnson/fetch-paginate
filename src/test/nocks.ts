@@ -186,3 +186,11 @@ nock(base)
   .get("/hateoas/3")
   .times(Infinity)
   .reply(200, { list: ["three"], _links: {} });
+
+nock(base)
+  .get("/hateoas-links")
+  .times(Infinity)
+  .reply(200, { list: ["one"], links: { next: { href: "/hateoas-links/2" } } })
+  .get("/hateoas-links/2")
+  .times(Infinity)
+  .reply(200, { list: ["two"], links: {} });

@@ -108,7 +108,7 @@ export interface FetchPaginateOptions<$Body, Item> {
   merge?: FetchPaginateMergeFunction<Item>;
   parse?: FetchPaginateParseFunction<$Body>;
   next?: FetchPaginateNextFunction<Item, $Body> | string;
-  nextHateoas?: boolean;
+  hateoas?: boolean | string;
   limit?: number;
   offset?: number;
   params?: FetchPaginateParams;
@@ -274,7 +274,7 @@ const fetchPaginateIterator = <$Body, Item>(
     getItems = defaultGetItems,
     merge = defaultMerge,
     parse = defaultParse,
-    nextHateoas,
+    hateoas,
     until,
     fetchOptions: baseFetchOptions,
     getFetch = () => fetch,
@@ -282,7 +282,10 @@ const fetchPaginateIterator = <$Body, Item>(
   } = options;
 
   const next: FetchPaginateNextFunction<Item, $Body> | string =
-    options.next ?? (nextHateoas ? "_links.next.href" : defaultNext);
+    options.next ??
+    (hateoas
+      ? `${hateoas === true ? "_links" : hateoas}.next.href`
+      : defaultNext);
 
   let fetchOptions = baseFetchOptions;
   let prevVariablesJson: string | undefined;

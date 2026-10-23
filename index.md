@@ -341,14 +341,15 @@ fetchPaginate("https://api.example.com/orders", {
 });
 ```
 
-### `nextHateoas`
+### `hateoas`
 
-`boolean`
+`boolean | string`
 
-Shorthand: when `true` and `next` is not set, `next` defaults to `"_links.next.href"`.
+Shorthand: when `true` and `next` is not set, `next` defaults to `"_links.next.href"`. Pass a string to use a different name for the `_links` object, e.g. `"links"` for `"links.next.href"`.
 
 ```js
-fetchPaginate("https://api.example.com/orders", { nextHateoas: true });
+fetchPaginate("https://api.example.com/orders", { hateoas: true });
+fetchPaginate("https://api.example.com/orders", { hateoas: "links" });
 ```
 
 ### `params`
