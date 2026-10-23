@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { startServer } from "./server";
+import { graphqlRequests, requests } from "./handlers";
 
 let testServer: Awaited<ReturnType<typeof startServer>>;
 let baseUrl: string;
@@ -43,7 +44,7 @@ afterAll(
 
 describe("CLI", () => {
   it("paginates through responses and extracts items from a nested path", async () => {
-    testServer.requests.length = 0;
+    requests.length = 0;
 
     const result = await runCli([
       `${baseUrl}/pages`,
@@ -56,7 +57,7 @@ describe("CLI", () => {
     expect(result.stdout).toContain("'one'");
     expect(result.stdout).toContain("'two'");
     expect(result.stdout).not.toContain("not an item");
-    expect(testServer.requests).toEqual(["1", "2", "3"]);
+    expect(requests).toEqual(["1", "2", "3"]);
   });
 
   it("extracts items with -i from a nested response path", async () => {
@@ -68,7 +69,7 @@ describe("CLI", () => {
   });
 
   it("paginates GraphQL responses using a query and cursor path", async () => {
-    testServer.graphqlRequests.length = 0;
+    graphqlRequests.length = 0;
     const query =
       "query Products($cursor: String) { products(after: $cursor) { nodes pageInfo { endCursor } } }";
 
@@ -86,7 +87,7 @@ describe("CLI", () => {
     expect(result.stdout).toContain("'product-1'");
     expect(result.stdout).toContain("'product-2'");
     expect(result.stdout).toContain("'product-3'");
-    expect(testServer.graphqlRequests).toEqual([
+    expect(graphqlRequests).toEqual([
       { query, cursor: undefined },
       { query, cursor: "cursor-1" },
       { query, cursor: "cursor-2" },
