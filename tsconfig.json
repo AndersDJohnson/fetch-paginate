@@ -11,5 +11,6 @@
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true
   },
-  "include": ["src/index.ts", "src/cli.ts"]
+  "include": ["src/**/*"],
+  "exclude": ["src/test/**/*"]
 }
