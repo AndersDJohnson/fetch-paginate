@@ -271,6 +271,46 @@ const { items } = await fetchPaginate("https://graphql.example.com", {
 
 If both `cursor` and `variables` are provided, an object returned by `variables` is merged with the path cursor, which takes precedence. A string returned by `variables` is ignored in favor of the path cursor.
 
+### CLI
+
+Run the CLI with `npx` (or `yarn dlx` or `pnx`/`pnpx`/`pnpm dlx`) and provide the API URL and any pagination options:
+
+```sh
+npx fetch-paginate https://api.example.com/foo --items data.results --params.page
+```
+
+For offset-based pagination, set the starting offset and page size as needed:
+
+```sh
+npx fetch-paginate https://api.example.com/foo \
+  --params.offset start --params.limit count \
+  --offset 20 --limit 10 --items data.results
+```
+
+The CLI supports these options:
+
+- `<url>`: Required API URL to fetch.
+- `-i, --items <path>`: Dot-separated path to the items array in each response body. Defaults to using the whole response body.
+- `-p, --page <number>`: Page number to start from when using page-based pagination (defaults to `1`).
+- `--params.page [name]`: Use page-based query parameter pagination. The parameter defaults to `page`; provide a name to customize it, for example `--params.page pg`.
+- `-o, --offset <number>`: Offset to start from when using offset-based pagination (defaults to `0`).
+- `-l, --limit <number>`: Number of items per page for offset-based pagination (defaults to the first page's item count).
+- `--params.offset [name]`: Use offset-based pagination. The parameter defaults to `offset`; provide a name to customize it.
+- `--params.limit [name]`: Set or customize the limit parameter used with offset pagination.
+- `-g, --graphql <query>`: Send a GraphQL query in a POST request.
+- `--cursor <path>`: Dot-separated path to the next cursor in the previous GraphQL response body. The query should use a `$cursor` variable. For example:
+
+  ```sh
+  npx fetch-paginate https://graphql.example.com \
+    --graphql 'query Products($cursor: String) { products(first: 10, after: $cursor) { nodes { id name } pageInfo { endCursor } } }' \
+    --cursor data.products.pageInfo.endCursor \
+    --items data.products.nodes
+  ```
+
+The CLI supports a query and cursor path for GraphQL, but does not currently provide an option for arbitrary GraphQL variables. Without `--params.*` or `--graphql`, it follows pagination links in response headers.
+
+Run `npx fetch-paginate --help` for the complete options list.
+
 ## Options
 
 ### `getItems`
