@@ -296,6 +296,18 @@ describe("fetchPaginate", () => {
     expect(items).toEqual(["one", "two"]);
   });
 
+  it("should not stop on the first call when next finds no value", async () => {
+    const calls: boolean[] = [];
+    const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
+      next: ({ body, isFirst }: any) => {
+        calls.push(isFirst);
+        return body?._links?.next?.href;
+      },
+    });
+    expect(calls[0]).toBe(true);
+    expect(items).toEqual(["one", "two", "three"]);
+  });
+
   it("should stop when next path is missing", async () => {
     const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
       next: "_links.nope.href",
