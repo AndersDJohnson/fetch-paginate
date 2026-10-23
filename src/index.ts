@@ -18,17 +18,9 @@ export interface FetchPaginateUntilOptions<$Body, Item> {
 }
 
 export interface FetchPaginateNextOptions<Item, $Body = any> {
-  response: Response;
-  body: $Body;
-  pageItems: Item[];
-  page: number;
-  limit?: number;
-  offset: number;
-}
-
-interface FetchPaginateDefaultNextOptions<Item> {
   url: string;
   response?: Response;
+  body?: $Body;
   pageItems: Item[];
   page: number;
   limit?: number;
@@ -56,7 +48,7 @@ export type FetchPaginateParseFunction<$Body> = (
 ) => Promise<$Body> | $Body;
 export type FetchPaginateNextFunction<Item, $Body = any> = (
   nextOptions: FetchPaginateNextOptions<Item, $Body>
-) => string | null | undefined | void;
+) => FetchPaginateNext;
 
 export interface FetchPaginateIteratorValue<$Body, Item> {
   page?: $Body;
@@ -250,7 +242,7 @@ const defaultNext = <Item>({
   offset,
   params,
   isFirst,
-}: FetchPaginateDefaultNextOptions<Item>): FetchPaginateNext | void => {
+}: FetchPaginateNextOptions<Item>): FetchPaginateNext | void => {
   const nextWithParams = getNextWithParams({
     url,
     pageItems,
@@ -281,7 +273,7 @@ const fetchPaginateIterator = <$Body, Item>(
     getItems = defaultGetItems,
     merge = defaultMerge,
     parse = defaultParse,
-    next,
+    next = defaultNext,
     until,
     fetchOptions: baseFetchOptions,
     getFetch = () => fetch,
@@ -413,32 +405,17 @@ const fetchPaginateIterator = <$Body, Item>(
 
           nextMeta = { url };
         } else {
-          if (next && count > 0) {
-            const nextHref = await next({
-              response,
-              body: pageBody,
-              pageItems,
-              limit,
-              offset,
-              page,
-            });
-            nextMeta = nextHref
-              ? { url: new URL(nextHref, nextUrl).toString() }
-              : undefined;
-          } else if (next) {
-            nextMeta = { url };
-          } else {
-            nextMeta = defaultNext<Item>({
-              url: nextUrl,
-              response,
-              pageItems,
-              limit,
-              offset,
-              page,
-              params: actualParams,
-              isFirst: count === 0,
-            });
-          }
+          nextMeta = await next<Item>({
+            url: nextUrl,
+            response,
+            body: count === 0 ? undefined : pageBody,
+            pageItems,
+            limit,
+            offset,
+            page,
+            params: actualParams,
+            isFirst: count === 0,
+          });
         }
 
         if (!nextMeta) {
