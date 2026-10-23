@@ -20,6 +20,7 @@ type Item = string;
 
 interface $Body {
   list: Item[];
+  nextCursor?: string | null;
 }
 
 const fetchPaginateMakeIteratorWrapper = (url: string, opts?: any) =>
@@ -310,6 +311,53 @@ describe("fetchPaginate", () => {
       }
     );
     expect(pages).toHaveLength(3);
+    expect(items).toEqual(["p1", "p2", "p3"]);
+  });
+
+  it("should paginate with a cursor query parameter using a response path", async () => {
+    const { items } = await fetchPaginate<$Body, Item>(`${base}/cursor`, {
+      getCursor: "nextCursor",
+      getItems,
+    });
+
+    expect(items).toEqual(["one", "two", "three"]);
+  });
+
+  it("should paginate with a custom cursor parameter using a function", async () => {
+    const { items } = await fetchPaginate<$Body, Item>(
+      `${base}/cursor-custom`,
+      {
+        params: { cursor: "after" },
+        getCursor: (body) => body.nextCursor,
+        getItems,
+      }
+    );
+
+    expect(items).toEqual(["one", "two"]);
+  });
+
+  it("should follow a cursor after an empty page", async () => {
+    const { items } = await fetchPaginate<$Body, Item>(
+      `${base}/cursor-empty`,
+      {
+        params: { cursor: true },
+        getCursor: "nextCursor",
+        getItems,
+      }
+    );
+
+    expect(items).toEqual(["two"]);
+  });
+
+  it("should use root getCursor for GraphQL cursor pagination", async () => {
+    const { items } = await fetchPaginate<any, string>(`${base}/graphql`, {
+      graphql: {
+        query: productsQuery,
+      },
+      getCursor: (body) => body.data.products.pageInfo.endCursor,
+      getItems: (body) => body.data.products.list,
+    });
+
     expect(items).toEqual(["p1", "p2", "p3"]);
   });
 });

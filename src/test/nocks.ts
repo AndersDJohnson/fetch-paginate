@@ -169,3 +169,27 @@ nock(base)
       },
     };
   });
+
+nock(base)
+  .get("/cursor")
+  .reply(200, { list: ["one"], nextCursor: "cursor-1" })
+  .get("/cursor")
+  .query({ cursor: "cursor-1" })
+  .reply(200, { list: ["two"], nextCursor: "cursor-2" })
+  .get("/cursor")
+  .query({ cursor: "cursor-2" })
+  .reply(200, { list: ["three"], nextCursor: null });
+
+nock(base)
+  .get("/cursor-custom")
+  .reply(200, { list: ["one"], nextCursor: "cursor-1" })
+  .get("/cursor-custom")
+  .query({ after: "cursor-1" })
+  .reply(200, { list: ["two"], nextCursor: null });
+
+nock(base)
+  .get("/cursor-empty")
+  .reply(200, { list: [], nextCursor: "cursor-1" })
+  .get("/cursor-empty")
+  .query({ cursor: "cursor-1" })
+  .reply(200, { list: ["two"], nextCursor: null });
