@@ -185,12 +185,12 @@ nock(base)
   })
   .get("/hateoas/3")
   .times(Infinity)
-  .reply(200, { list: ["three"], _links: {} });
+  .reply(200, { list: ["three"], __links: {} });
 
 nock(base)
   .get("/hateoas-links")
   .times(Infinity)
-  .reply(200, { list: ["one"], links: { next: { href: "/hateoas-links/2" } } })
+  .reply(200, { list: ["one"], _links: { more: { href: "/hateoas-links/2" } } })
   .get("/hateoas-links/2")
   .times(Infinity)
-  .reply(200, { list: ["two"], links: {} });
+  .reply(200, { list: ["two"], _links: {} });

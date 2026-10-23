@@ -284,7 +284,7 @@ const fetchPaginateIterator = <$Body, Item>(
   const next: FetchPaginateNextFunction<Item, $Body> | string =
     options.next ??
     (hateoas
-      ? `${hateoas === true ? "_links" : hateoas}.next.href`
+      ? `_links.${hateoas === true ? "next" : hateoas}.href`
       : defaultNext);
 
   let fetchOptions = baseFetchOptions;

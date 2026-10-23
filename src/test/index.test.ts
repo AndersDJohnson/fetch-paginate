@@ -289,9 +289,9 @@ describe("fetchPaginate", () => {
     expect(items).toEqual(["one", "two", "three"]);
   });
 
-  it("should paginate with hateoas links name", async () => {
+  it("should paginate with hateoas link name", async () => {
     const { items } = await fetchPaginateWrapper(`${base}/hateoas-links`, {
-      hateoas: "links",
+      hateoas: "more",
     });
     expect(items).toEqual(["one", "two"]);
   });
