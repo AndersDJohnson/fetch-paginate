@@ -213,6 +213,21 @@ await fetchPaginate("https://api.example.com/foo", {
 });
 ```
 
+#### Throttling
+
+`getFetch` must return the `fetch`-compatible function itself (not a function that returns it).
+To throttle requests, wrap `fetch` once and return it:
+
+```js
+import throttle from "fetch-throttle";
+
+const throttledFetch = throttle(fetch, 10, 1000);
+
+await fetchPaginate("https://api.example.com/foo", {
+  getFetch: () => throttledFetch,
+});
+```
+
 ### Browser
 
 For bundled/browser use `fetch-paginate/bundle` (which includes dependencies, except `fetch`):
