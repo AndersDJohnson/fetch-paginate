@@ -143,6 +143,22 @@ nock(base)
   .post("/graphql")
   .times(Infinity)
   .reply(200, (_uri, body: any) => {
+    const cursor = body.variables?.cursor;
+    if (body.query.includes("query Products")) {
+      const page = cursor === "cursor-1" ? 2 : cursor === "cursor-2" ? 3 : 1;
+      return {
+        data: {
+          products: {
+            list: [`p${page}`],
+            pageInfo: {
+              endCursor: page < 3 ? `cursor-${page}` : null,
+              hasNextPage: page < 3,
+            },
+          },
+        },
+      };
+    }
+
     const page = body.variables?.page ?? 1;
     return {
       data: {

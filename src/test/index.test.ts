@@ -274,4 +274,42 @@ describe("fetchPaginate", () => {
     expect(pages).toHaveLength(3);
     expect(items).toEqual(["p1", "p2", "p3"]);
   });
+
+  const productsQuery = `query Products($cursor: String) {
+    products(first: 10, after: $cursor) {
+      nodes { id name }
+      pageInfo { endCursor hasNextPage }
+    }
+  }`;
+
+  it("should paginate graphql with a cursor path", async () => {
+    const { items, pages } = await fetchPaginate<any, string>(
+      `${base}/graphql`,
+      {
+        graphql: {
+          query: productsQuery,
+          cursor: "data.products.pageInfo.endCursor",
+        },
+        getItems: (body) => body.data.products.list,
+      }
+    );
+    expect(pages).toHaveLength(3);
+    expect(items).toEqual(["p1", "p2", "p3"]);
+  });
+
+  it("should use a string returned by graphql variables as the cursor", async () => {
+    const { items, pages } = await fetchPaginate<any, string>(
+      `${base}/graphql`,
+      {
+        graphql: {
+          query: productsQuery,
+          variables: ({ page }) =>
+            page?.data?.products?.pageInfo?.endCursor,
+        },
+        getItems: (body) => body.data.products.list,
+      }
+    );
+    expect(pages).toHaveLength(3);
+    expect(items).toEqual(["p1", "p2", "p3"]);
+  });
 });

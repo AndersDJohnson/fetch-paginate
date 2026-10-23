@@ -81,15 +81,22 @@ export interface FetchPaginateGetFetchArgs<$Body, Item> {
 export interface FetchPaginateGraphQLOptions<$Body> {
   query: string;
   operationName?: string;
+  cursor?: string;
   /**
    * Called before each request with `{ page }`, the previous page's parsed body
-   * (`undefined` for the first request). Return the variables for the next call.
+   * (`undefined` for the first request). Return the variables for the next call,
+   * or a string to use as the `cursor` variable.
    * Pagination stops when a falsy value is returned after the first call,
    * or when the variables are identical to the previous call's.
    */
   variables?: (
     options: Pick<FetchPaginateUntilOptions<$Body, any>, "page">
-  ) => Record<string, unknown> | null | undefined | false;
+  ) =>
+    | string
+    | Record<string, unknown>
+    | null
+    | undefined
+    | false;
 }
 
 export interface FetchPaginateOptions<$Body, Item> {
@@ -118,6 +125,18 @@ const defaultMerge = <Item>(setOfSetsOfItems: (Item[] | undefined)[]): Item[] =>
 
 const defaultParse = <$Body>(response: Response): Promise<$Body> =>
   response.ok && response.status !== 204 ? response.json() : (response.text() as Promise<$Body>);
+
+const getPath = (value: unknown, path: string) =>
+  path.split(".").reduce<unknown>((current, key) => {
+    if (
+      current === null ||
+      typeof current !== "object" ||
+      !Object.prototype.hasOwnProperty.call(current, key)
+    ) {
+      return undefined;
+    }
+    return (current as Record<string, unknown>)[key];
+  }, value);
 
 const getNextFromLinkHeader = ({
   response,
@@ -332,13 +351,34 @@ const fetchPaginateIterator = <$Body, Item>(
         let nextMeta: FetchPaginateNext | void;
 
         if (graphql) {
-          const variables = graphql.variables
-            ? graphql.variables({ page: count === 0 ? undefined : pageBody })
+          const previousPage = count === 0 ? undefined : pageBody;
+          const cursor =
+            graphql.cursor !== undefined
+              ? getPath(previousPage, graphql.cursor)
+              : undefined;
+          const variablesResult = graphql.variables
+            ? graphql.variables({ page: previousPage })
             : undefined;
 
-          if (count > 0 && !variables) {
+          if (count > 0 && graphql.variables && !variablesResult) {
             return makeShortCircuit();
           }
+
+          if (count > 0 && graphql.cursor !== undefined && !cursor) {
+            return makeShortCircuit();
+          }
+
+          const variables: Record<string, unknown> | undefined =
+            graphql.cursor !== undefined
+              ? {
+                  ...(typeof variablesResult === "object" && variablesResult
+                    ? variablesResult
+                    : {}),
+                  cursor,
+                }
+              : typeof variablesResult === "string"
+              ? { cursor: variablesResult }
+              : variablesResult || undefined;
 
           const variablesJson = JSON.stringify(variables ?? null);
 
