@@ -103,6 +103,28 @@ export const handlers = [
   http.get("*/ofs", ({ request }) =>
     offsetResponse(new URL(request.url), "ofs", "lmt")
   ),
+  http.get("*/cursor", ({ request }) => {
+    const cursor = new URL(request.url).searchParams.get("cursor");
+    const page = cursor === "cursor-1" ? 2 : cursor === "cursor-2" ? 3 : 1;
+    return HttpResponse.json({
+      list: [items[page - 1]],
+      nextCursor: page < 3 ? `cursor-${page}` : null,
+    });
+  }),
+  http.get("*/cursor-custom", ({ request }) => {
+    const cursor = new URL(request.url).searchParams.get("after");
+    const page = cursor === "cursor-1" ? 2 : 1;
+    return HttpResponse.json({
+      list: [items[page - 1]],
+      nextCursor: page === 1 ? "cursor-1" : null,
+    });
+  }),
+  http.get("*/cursor-empty", ({ request }) => {
+    const cursor = new URL(request.url).searchParams.get("cursor");
+    return cursor === "cursor-1"
+      ? HttpResponse.json({ list: ["two"], nextCursor: null })
+      : HttpResponse.json({ list: [], nextCursor: "cursor-1" });
+  }),
   http.get("*/nested", () =>
     HttpResponse.json({
       payload: { results: ["nested-item"] },
