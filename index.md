@@ -110,7 +110,9 @@ const { items } = await fetchPaginate("https://api.example.com/foo", {
 });
 ```
 
-If your pages start at a different number, like `0`, use the `page` option:
+### Custom Start or Limit
+
+To start at a page other than the default first page, use the `page` option. For APIs whose pages start at `0`:
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {
@@ -119,34 +121,33 @@ const { items } = await fetchPaginate("https://api.example.com/foo", {
 });
 ```
 
-If you want to start fetching at a later page, use the `page` option:
+To start at a later page:
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {
   params: true, // Assumes `page` parameter.
-  page: 3, // Start at the 3rd page.
+  page: 3, // Start at page 3.
 });
 ```
 
-If you want to fetch with a specific number of items per page, instead of defaulting to the size of the first page (requested without `limit`), you can do:
+To start at a specific offset, set `offset`. You can also set `limit` to control the size of each page:
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {
   params: {
     offset: true,
   },
+  offset: 17, // Start at the 17th item.
   limit: 10, // Fetch 10 items per page.
 });
 ```
 
-If you want to start fetching at a specific offset:
+For cursor-based APIs, set `cursor` to the starting cursor. Use `getCursor` to select the next cursor from each response:
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {
-  params: {
-    offset: true,
-  },
-  offset: 17, // Start fetching at the 17th item.
+  cursor: "cursor-from-previous-request",
+  getCursor: "nextCursor",
 });
 ```
 
@@ -341,6 +342,45 @@ Defaults to always return `false` - to continue to consume until all pages:
 ({ page, pages, response, responses, items, pageItems }) => false;
 ```
 
+### `next`
+
+`string | (args: { url, response, body, pageItems, page, limit, offset, params, isFirst }) => string | { url?, page?, limit?, offset? } | void`
+
+Determines the next request. Either:
+
+- a **function**, called before each request (with `isFirst: true` before the first). Return the next URL as a string, or an object with the next `url` (or `page`, `limit`, `offset`), or a falsy value to stop paginating. If it returns a falsy value on the first call, the original `url` is requested. `body` is the parsed body of the previous page (`undefined` on the first call).
+- a **string**, a dot-separated path (e.g. `"_links.next.href"`) to the next URL in the previous page's parsed body. 
+
+Missing values stop pagination, except before the first request, where there is no previous page yet and the original `url` is requested.
+
+Returned URL strings may be relative; they are resolved against the previous request URL.
+
+Defaults to using `params`, or else the `Link` header's `rel="next"`.
+
+For example, to follow a next link in the response body, as in HATEOAS APIs:
+
+```js
+fetchPaginate("https://api.example.com/orders", {
+  next: ({ body }) => body?._links?.next?.href,
+});
+
+// or equivalently
+fetchPaginate("https://api.example.com/orders", {
+  next: "_links.next.href",
+});
+```
+
+### `hateoas`
+
+`boolean | string`
+
+Shorthand: when `true` and `next` is not set, `next` defaults to `"_links.next.href"`. Pass a string to use a different link name under `_links`, e.g. `"more"` for `"_links.more.href"`.
+
+```js
+fetchPaginate("https://api.example.com/orders", { hateoas: true });
+fetchPaginate("https://api.example.com/orders", { hateoas: "more" });
+```
+
 ### `params`
 
 `boolean | ParamsObject`
@@ -393,25 +433,25 @@ Gets the cursor from a parsed response body, either with a dot-separated path or
 
 `number`
 
-If using `params` with `page`, this indicates the page at which to start fetching.
-
-Defaults to `1`.
+If using `params` with `page`, this indicates the page at which to start fetching. Defaults to `1`.
 
 ### `offset`
 
 `number`
 
-If using `params` with `offset` and `limit`, this indicates the offset at which to start fetching.
-
-Defaults to `0`.
+If using `params` with `offset` and `limit`, this indicates the offset at which to start fetching. Defaults to `0`.
 
 ### `limit`
 
 `number`
 
-If using `params` with `offset` and `limit`, this indicates the size of each page.
+If using `params` with `offset` and `limit`, this indicates the size of each page. Defaults to the size of the first page fetched.
 
-Defaults to the size of the first page fetched.
+### `cursor`
+
+`string | number`
+
+The cursor to use for the first request when using cursor pagination. For query parameter pagination, it uses the parameter selected by `params.cursor` (default `"cursor"`). For GraphQL, it is sent as the first request's `cursor` variable when `getCursor` or `graphql.cursor` is configured.
 
 ### `fetchOptions`
 
