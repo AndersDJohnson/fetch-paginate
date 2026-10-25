@@ -102,12 +102,16 @@ export interface FetchPaginateGraphQLOptions<$Body> {
     | false;
 }
 
+export type FetchPaginateGraphQL<$Body> =
+  | FetchPaginateGraphQLOptions<$Body>
+  | string;
+
 export type FetchPaginateGetCursorFunction<$Body> = (
   body: $Body
 ) => string | number | false | null | undefined;
 
 export interface FetchPaginateOptions<$Body, Item> {
-  graphql?: FetchPaginateGraphQLOptions<$Body>;
+  graphql?: FetchPaginateGraphQL<$Body>;
   getCursor?: string | FetchPaginateGetCursorFunction<$Body>;
   fetchOptions?: ResponseInit;
   until?: FetchPaginateUntilFunction<$Body, Item>;
@@ -403,6 +407,8 @@ const fetchPaginateIterator = <$Body, Item>(
         }
 
         const prevUrl = nextUrl;
+        const graphqlOptions =
+          typeof graphql === "string" ? { query: graphql } : graphql;
 
         let nextMeta: FetchPaginateNext | void;
 
@@ -413,20 +419,20 @@ const fetchPaginateIterator = <$Body, Item>(
             ? getPath(body, getCursor)
             : undefined;
 
-        if (graphql) {
+        if (graphqlOptions) {
           const previousPage = count === 0 ? undefined : pageBody;
-          const graphqlCursor = getCursor ?? graphql.cursor;
+          const graphqlCursor = getCursor ?? graphqlOptions.cursor;
           const cursor =
             graphqlCursor !== undefined && previousPage !== undefined
               ? typeof graphqlCursor === "function"
                 ? graphqlCursor(previousPage)
                 : getPath(previousPage, graphqlCursor)
               : undefined;
-          const variablesResult = graphql.variables
-            ? graphql.variables({ page: previousPage })
+          const variablesResult = graphqlOptions.variables
+            ? graphqlOptions.variables({ page: previousPage })
             : undefined;
 
-          if (count > 0 && graphql.variables && !variablesResult) {
+          if (count > 0 && graphqlOptions.variables && !variablesResult) {
             return makeShortCircuit();
           }
 
@@ -462,8 +468,8 @@ const fetchPaginateIterator = <$Body, Item>(
               ...(baseFetchOptions?.headers as Record<string, string>),
             },
             body: JSON.stringify({
-              query: graphql.query,
-              operationName: graphql.operationName,
+              query: graphqlOptions.query,
+              operationName: graphqlOptions.operationName,
               variables: variables || undefined,
             }),
           } as ResponseInit;
