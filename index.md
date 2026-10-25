@@ -112,7 +112,16 @@ const { items } = await fetchPaginate("https://api.example.com/foo", {
 
 ### Starting midstream
 
-To start at a page other than the default first page, use the `page` option. This also supports APIs whose pages start at `0`:
+To start at a page other than the default first page, use the `page` option. For APIs whose pages start at `0`:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: true, // Assumes `page` parameter.
+  page: 0,
+});
+```
+
+To start at a later page:
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {

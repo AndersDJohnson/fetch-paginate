@@ -438,7 +438,14 @@ const fetchPaginateIterator = <$Body, Item>(
             return makeShortCircuit();
           }
 
-          if (count > 0 && graphqlCursor !== undefined && !cursor) {
+          if (
+            count > 0 &&
+            graphqlCursor !== undefined &&
+            (cursor === undefined ||
+              cursor === null ||
+              cursor === false ||
+              cursor === "")
+          ) {
             return makeShortCircuit();
           }
 

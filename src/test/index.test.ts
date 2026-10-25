@@ -336,6 +336,19 @@ describe("fetchPaginate", () => {
     expect(items).toEqual(["two", "three"]);
   });
 
+  it("should paginate from a numeric zero cursor", async () => {
+    const { items } = await fetchPaginate<$Body, Item>(
+      `${base}/cursor-start-zero`,
+      {
+        cursor: 0,
+        getCursor: "nextCursor",
+        getItems,
+      }
+    );
+
+    expect(items).toEqual(["zero", "one"]);
+  });
+
   it("should start GraphQL cursor pagination from a cursor", async () => {
     const { items } = await fetchPaginate<any, string>(`${base}/graphql`, {
       graphql: {
