@@ -360,4 +360,14 @@ describe("fetchPaginate", () => {
 
     expect(items).toEqual(["p1", "p2", "p3"]);
   });
+
+  it("should accept a GraphQL query string directly", async () => {
+    const { items } = await fetchPaginate<any, string>(`${base}/graphql`, {
+      graphql: productsQuery,
+      getCursor: (body) => body.data.products.pageInfo.endCursor,
+      getItems: (body) => body.data.products.list,
+    });
+
+    expect(items).toEqual(["p1", "p2", "p3"]);
+  });
 });
