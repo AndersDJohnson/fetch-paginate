@@ -6,4 +6,4 @@ andersdjohnson:
   # Show badges for npm
   npm_name: fetch-paginate
   # Show a badge for a GitHub Actions workflow
-  workflow: "push-main"
+  workflow: "ci"
