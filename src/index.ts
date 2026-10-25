@@ -452,31 +452,44 @@ const fetchPaginateIterator = <$Body, Item>(
               ? { cursor: variablesResult }
               : variablesResult || undefined;
 
-          const usesPage = params === true || getCursor === undefined;
-          const usesOffset =
-            (typeof params === "object" && !!params?.offset) ||
-            !!options.offset;
+          const cursorPagination =
+            actualParams?.cursor !== undefined && actualParams.cursor !== false;
+
+          const nextWithParams = cursorPagination
+            ? undefined
+            : getNextWithParams({
+                params: actualParams ?? true,
+                pageItems,
+                url,
+                page,
+                limit,
+                offset,
+                isFirst: count === 0,
+              });
 
           if (
             count > 0 &&
-            (usesPage || usesOffset) &&
+            !nextWithParams &&
+            !cursorPagination &&
             graphqlCursor === undefined &&
-            !graphqlOptions.variables &&
-            pageItems.length === 0
+            !graphqlOptions.variables
           ) {
             return makeShortCircuit();
           }
 
-          if (count > 0) {
-            limit = limit ?? pageItems.length;
-            page = page + 1;
-            offset = offset + limit;
-          }
+          const nextLimit =
+            nextWithParams?.limit ??
+            limit ??
+            (count > 0 ? pageItems.length : undefined);
 
           const pagingVariables: Record<string, unknown> = {
-            ...(limit !== undefined ? { limit } : {}),
-            ...(usesPage ? { page } : {}),
-            ...(usesOffset ? { offset } : {}),
+            ...(nextLimit !== undefined ? { limit: nextLimit } : {}),
+            ...(nextWithParams?.page !== undefined
+              ? { page: nextWithParams.page }
+              : {}),
+            ...(nextWithParams?.offset !== undefined
+              ? { offset: nextWithParams.offset }
+              : {}),
           };
 
           const variables: Record<string, unknown> | undefined =
@@ -506,7 +519,12 @@ const fetchPaginateIterator = <$Body, Item>(
             }),
           } as ResponseInit;
 
-          nextMeta = { url };
+          nextMeta = {
+            url,
+            limit: nextLimit,
+            offset: nextWithParams?.offset,
+            page: nextWithParams?.page,
+          };
         } else {
           const cursorValue = count > 0 ? getCursorValue(pageBody) : undefined;
           const cursor =

@@ -261,7 +261,7 @@ query Products($cursor: String, $limit: Int) {
 }
 ```
 
-The `limit` variable is always sent (the `limit` option, or the size of the first page), so you can use it as the `first` argument on a node, as above. A `$page` variable is sent if `params` is `true` or `getCursor` is not defined, and an `$offset` variable is sent if `params.offset` (or the `offset` option) is truthy. `page` goes up by 1 on each request and `offset` advances by `limit`. Explicit `variables` take precedence. Without a cursor or `variables`, pagination stops when a page has no items.
+GraphQL uses the same `params`, `page`, `limit` and `offset` logic as REST pagination, but sends the values as `$page`, `$limit` and `$offset` variables instead of query parameters. A `$page` variable is sent (incrementing on each request) unless `getCursor` is used, or `params` / the `offset` or `limit` options select offset pagination, in which case `$offset` (advancing by `limit`) and `$limit` are sent instead. `$limit` is the `limit` option, or the size of the first page once known, so you can use it as the `first` argument on a node, as above. Explicit `variables` take precedence. Without a cursor or `variables`, pagination stops when a page has no items.
 
 ```js
 const { items } = await fetchPaginate("https://graphql.example.com", {
@@ -433,5 +433,5 @@ Use this, e.g., to define your own custom cache wrapper.
 Paginate a GraphQL API (see [GraphQL](#graphql)).
 Pass the query directly as a string, or use an object to provide additional GraphQL options.
 Requests are sent as `POST` with a JSON body of `{ query, operationName, variables }`, and `fetchOptions.headers` are merged over the default `Content-Type: application/json`.
-The `next` and `params` options are not used. `limit` is always sent as a variable; `page` is sent if `params` is `true` or `getCursor` is not defined; `offset` is sent if `params.offset` is truthy.
+The `next` and `params` options are not used. `page`, `limit` and `offset` are sent as variables using the same logic as REST pagination (including `params.page`, `params.offset` and `params.limit`).
 `cursor` is a deprecated dot-separated path into the previous page's parsed response body; use root-level `getCursor` instead. A string returned by `variables` is sent as the `cursor` variable. An object is sent as the variables object, unless `cursor` or `getCursor` is also set, in which case it is merged with the extracted cursor and the extracted value wins. Pagination also stops when `variables` returns a falsy value after the first call, or when the variables are identical to the previous call.
