@@ -452,9 +452,34 @@ const fetchPaginateIterator = <$Body, Item>(
               ? { cursor: variablesResult }
               : variablesResult || undefined;
 
+          const usesPage = options.page !== undefined;
+          const usesOffset = options.offset !== undefined;
+
+          if (
+            count > 0 &&
+            (usesPage || usesOffset) &&
+            graphqlCursor === undefined &&
+            !graphqlOptions.variables &&
+            pageItems.length === 0
+          ) {
+            return makeShortCircuit();
+          }
+
+          if (count > 0) {
+            limit = limit ?? pageItems.length;
+            page = page + 1;
+            offset = offset + limit;
+          }
+
+          const pagingVariables: Record<string, unknown> = {
+            ...(limit !== undefined ? { limit } : {}),
+            ...(usesPage ? { page } : {}),
+            ...(usesOffset ? { offset } : {}),
+          };
+
           const variables: Record<string, unknown> | undefined =
-            options.limit !== undefined
-              ? { limit: options.limit, ...baseVariables }
+            Object.keys(pagingVariables).length > 0
+              ? { ...pagingVariables, ...baseVariables }
               : baseVariables;
 
           const variablesJson = JSON.stringify(variables ?? null);

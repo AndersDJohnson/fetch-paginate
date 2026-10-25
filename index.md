@@ -261,7 +261,7 @@ query Products($cursor: String, $limit: Int) {
 }
 ```
 
-If the `limit` option is set, it is sent as the `limit` variable, so you can use it as the `first` argument on a node, as above (explicit `variables` take precedence).
+If the `limit` option is set, it is sent as the `limit` variable, so you can use it as the `first` argument on a node, as above. Likewise, if the `page` or `offset` option is set, `$page` or `$offset` variables are sent (incrementing on each request, with `offset` advancing by `limit`, which defaults to the size of the first page). Explicit `variables` take precedence. Without a cursor or `variables`, pagination stops when a page has no items.
 
 ```js
 const { items } = await fetchPaginate("https://graphql.example.com", {
@@ -433,5 +433,5 @@ Use this, e.g., to define your own custom cache wrapper.
 Paginate a GraphQL API (see [GraphQL](#graphql)).
 Pass the query directly as a string, or use an object to provide additional GraphQL options.
 Requests are sent as `POST` with a JSON body of `{ query, operationName, variables }`, and `fetchOptions.headers` are merged over the default `Content-Type: application/json`.
-The `next`, `params`, `page` and `offset` options are not used. The `limit` option, if set, is sent as the `limit` variable.
+The `next` and `params` options are not used. The `limit`, `page` and `offset` options, if set, are sent as the `limit`, `page` and `offset` variables.
 `cursor` is a deprecated dot-separated path into the previous page's parsed response body; use root-level `getCursor` instead. A string returned by `variables` is sent as the `cursor` variable. An object is sent as the variables object, unless `cursor` or `getCursor` is also set, in which case it is merged with the extracted cursor and the extracted value wins. Pagination also stops when `variables` returns a falsy value after the first call, or when the variables are identical to the previous call.
