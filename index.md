@@ -381,29 +381,25 @@ The name of the query parameter to use for a cursor. Use `true` to use the defau
 
 Gets the cursor from a parsed response body, either with a dot-separated path or a function. The returned cursor is used for the next request's query parameter (default `"cursor"`) or, for GraphQL, as the `cursor` variable. Pagination stops when the value is falsy. The root-level option takes precedence over `graphql.cursor`.
 
-### Starting midstream
-
-Use these options to begin pagination after the first page or item.
-
-#### `page`
+### `page`
 
 `number`
 
 If using `params` with `page`, this indicates the page at which to start fetching. Defaults to `1`.
 
-#### `offset`
+### `offset`
 
 `number`
 
 If using `params` with `offset` and `limit`, this indicates the offset at which to start fetching. Defaults to `0`.
 
-#### `limit`
+### `limit`
 
 `number`
 
 If using `params` with `offset` and `limit`, this indicates the size of each page. Defaults to the size of the first page fetched.
 
-#### `cursor`
+### `cursor`
 
 `string | number`
 
