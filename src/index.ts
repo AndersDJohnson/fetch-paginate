@@ -452,25 +452,22 @@ const fetchPaginateIterator = <$Body, Item>(
               ? { cursor: variablesResult }
               : variablesResult || undefined;
 
-          const cursorPagination =
-            actualParams?.cursor !== undefined && actualParams.cursor !== false;
+          const { cursor: _cursorParam, ...paramsWithoutCursor } =
+            actualParams ?? {};
 
-          const nextWithParams = cursorPagination
-            ? undefined
-            : getNextWithParams({
-                params: actualParams ?? true,
-                pageItems,
-                url,
-                page,
-                limit,
-                offset,
-                isFirst: count === 0,
-              });
+          const nextWithParams = getNextWithParams({
+            params: paramsWithoutCursor,
+            pageItems,
+            url,
+            page,
+            limit,
+            offset,
+            isFirst: count === 0,
+          });
 
           if (
             count > 0 &&
             !nextWithParams &&
-            !cursorPagination &&
             graphqlCursor === undefined &&
             !graphqlOptions.variables
           ) {

@@ -261,7 +261,7 @@ query Products($cursor: String, $limit: Int) {
 }
 ```
 
-GraphQL uses the same `params`, `page`, `limit` and `offset` logic as REST pagination, but sends the values as `$page`, `$limit` and `$offset` variables instead of query parameters. A `$page` variable is sent (incrementing on each request) unless `getCursor` is used, or `params` / the `offset` or `limit` options select offset pagination, in which case `$offset` (advancing by `limit`) and `$limit` are sent instead. `$limit` is the `limit` option, or the size of the first page once known, so you can use it as the `first` argument on a node, as above. Explicit `variables` take precedence. Without a cursor or `variables`, pagination stops when a page has no items.
+GraphQL uses the same `params`, `page`, `limit` and `offset` logic as REST pagination, but sends the values as `$page`, `$limit` and `$offset` variables instead of query parameters. A `$page` variable is sent (incrementing on each request), even when `getCursor` is used, unless `params` / the `offset` or `limit` options select offset pagination, in which case `$offset` (advancing by `limit`) and `$limit` are sent instead. `$limit` is the `limit` option, or the size of the first page once known, so you can use it as the `first` argument on a node, as above. Explicit `variables` take precedence. Without a cursor or `variables`, pagination stops when a page has no items.
 
 ```js
 const { items } = await fetchPaginate("https://graphql.example.com", {
