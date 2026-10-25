@@ -181,6 +181,14 @@ nock(base)
   .reply(200, { list: ["three"], nextCursor: null });
 
 nock(base)
+  .get("/cursor-start")
+  .query({ cursor: "cursor-1" })
+  .reply(200, { list: ["two"], nextCursor: "cursor-2" })
+  .get("/cursor-start")
+  .query({ cursor: "cursor-2" })
+  .reply(200, { list: ["three"], nextCursor: null });
+
+nock(base)
   .get("/cursor-custom")
   .reply(200, { list: ["one"], nextCursor: "cursor-1" })
   .get("/cursor-custom")

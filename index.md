@@ -110,43 +110,35 @@ const { items } = await fetchPaginate("https://api.example.com/foo", {
 });
 ```
 
-If your pages start at a different number, like `0`, use the `page` option:
+### Starting midstream
+
+To start at a page other than the default first page, use the `page` option. This also supports APIs whose pages start at `0`:
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {
   params: true, // Assumes `page` parameter.
-  page: 0,
+  page: 3, // Start at page 3.
 });
 ```
 
-If you want to start fetching at a later page, use the `page` option:
-
-```js
-const { items } = await fetchPaginate("https://api.example.com/foo", {
-  params: true, // Assumes `page` parameter.
-  page: 3, // Start at the 3rd page.
-});
-```
-
-If you want to fetch with a specific number of items per page, instead of defaulting to the size of the first page (requested without `limit`), you can do:
+To start at a specific offset, set `offset`. You can also set `limit` to control the size of each page:
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {
   params: {
     offset: true,
   },
+  offset: 17, // Start at the 17th item.
   limit: 10, // Fetch 10 items per page.
 });
 ```
 
-If you want to start fetching at a specific offset:
+For cursor-based APIs, set `cursor` to the starting cursor. Use `getCursor` to select the next cursor from each response:
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {
-  params: {
-    offset: true,
-  },
-  offset: 17, // Start fetching at the 17th item.
+  cursor: "cursor-from-previous-request",
+  getCursor: "nextCursor",
 });
 ```
 
@@ -380,29 +372,33 @@ The name of the query parameter to use for a cursor. Use `true` to use the defau
 
 Gets the cursor from a parsed response body, either with a dot-separated path or a function. The returned cursor is used for the next request's query parameter (default `"cursor"`) or, for GraphQL, as the `cursor` variable. Pagination stops when the value is falsy. The root-level option takes precedence over `graphql.cursor`.
 
-### `page`
+### Starting midstream
+
+Use these options to begin pagination after the first page or item.
+
+#### `page`
 
 `number`
 
-If using `params` with `page`, this indicates the page at which to start fetching.
+If using `params` with `page`, this indicates the page at which to start fetching. Defaults to `1`.
 
-Defaults to `1`.
-
-### `offset`
+#### `offset`
 
 `number`
 
-If using `params` with `offset` and `limit`, this indicates the offset at which to start fetching.
+If using `params` with `offset` and `limit`, this indicates the offset at which to start fetching. Defaults to `0`.
 
-Defaults to `0`.
-
-### `limit`
+#### `limit`
 
 `number`
 
-If using `params` with `offset` and `limit`, this indicates the size of each page.
+If using `params` with `offset` and `limit`, this indicates the size of each page. Defaults to the size of the first page fetched.
 
-Defaults to the size of the first page fetched.
+#### `cursor`
+
+`string | number`
+
+The cursor to use for the first request when using cursor pagination. For query parameter pagination, it uses the parameter selected by `params.cursor` (default `"cursor"`). For GraphQL, it is sent as the first request's `cursor` variable when `getCursor` or `graphql.cursor` is configured.
 
 ### `fetchOptions`
 

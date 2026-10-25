@@ -323,6 +323,32 @@ describe("fetchPaginate", () => {
     expect(items).toEqual(["one", "two", "three"]);
   });
 
+  it("should paginate from a starting cursor", async () => {
+    const { items } = await fetchPaginate<$Body, Item>(
+      `${base}/cursor-start`,
+      {
+        cursor: "cursor-1",
+        getCursor: "nextCursor",
+        getItems,
+      }
+    );
+
+    expect(items).toEqual(["two", "three"]);
+  });
+
+  it("should start GraphQL cursor pagination from a cursor", async () => {
+    const { items } = await fetchPaginate<any, string>(`${base}/graphql`, {
+      graphql: {
+        query: productsQuery,
+      },
+      cursor: "cursor-1",
+      getCursor: (body) => body.data.products.pageInfo.endCursor,
+      getItems: (body) => body.data.products.list,
+    });
+
+    expect(items).toEqual(["p2", "p3"]);
+  });
+
   it("should paginate with a custom cursor parameter using a function", async () => {
     const { items } = await fetchPaginate<$Body, Item>(
       `${base}/cursor-custom`,
