@@ -110,7 +110,7 @@ const { items } = await fetchPaginate("https://api.example.com/foo", {
 });
 ```
 
-### Starting midstream
+### Custom Starting Point
 
 To start at a page other than the default first page, use the `page` option. For APIs whose pages start at `0`:
 
