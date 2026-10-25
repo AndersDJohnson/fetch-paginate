@@ -185,7 +185,7 @@ nock(base)
   })
   .get("/hateoas/3")
   .times(Infinity)
-  .reply(200, { list: ["three"], __links: {} });
+  .reply(200, { list: ["three"], _links: {} });
 
 nock(base)
   .get("/hateoas-links")
@@ -194,3 +194,43 @@ nock(base)
   .get("/hateoas-links/2")
   .times(Infinity)
   .reply(200, { list: ["two"], _links: {} });
+
+nock(base)
+  .get("/cursor")
+  .reply(200, { list: ["one"], nextCursor: "cursor-1" })
+  .get("/cursor")
+  .query({ cursor: "cursor-1" })
+  .reply(200, { list: ["two"], nextCursor: "cursor-2" })
+  .get("/cursor")
+  .query({ cursor: "cursor-2" })
+  .reply(200, { list: ["three"], nextCursor: null });
+
+nock(base)
+  .get("/cursor-start")
+  .query({ cursor: "cursor-1" })
+  .reply(200, { list: ["two"], nextCursor: "cursor-2" })
+  .get("/cursor-start")
+  .query({ cursor: "cursor-2" })
+  .reply(200, { list: ["three"], nextCursor: null });
+
+nock(base)
+  .get("/cursor-start-zero")
+  .query({ cursor: "0" })
+  .reply(200, { list: ["zero"], nextCursor: "1" })
+  .get("/cursor-start-zero")
+  .query({ cursor: "1" })
+  .reply(200, { list: ["one"], nextCursor: null });
+
+nock(base)
+  .get("/cursor-custom")
+  .reply(200, { list: ["one"], nextCursor: "cursor-1" })
+  .get("/cursor-custom")
+  .query({ after: "cursor-1" })
+  .reply(200, { list: ["two"], nextCursor: null });
+
+nock(base)
+  .get("/cursor-empty")
+  .reply(200, { list: [], nextCursor: "cursor-1" })
+  .get("/cursor-empty")
+  .query({ cursor: "cursor-1" })
+  .reply(200, { list: ["two"], nextCursor: null });

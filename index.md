@@ -93,7 +93,26 @@ const { items } = await fetchPaginate("https://api.example.com/foo", {
 });
 ```
 
-If your pages start at a different number, like `0`, use the `page` option:
+For cursor-based APIs, use `getCursor` to select the next cursor from each response. The cursor is sent as a query parameter named `cursor` by default:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  getCursor: "nextCursor",
+});
+```
+
+You can provide a function instead of a response-body path, and customize the query parameter name with `params.cursor`:
+
+```js
+const { items } = await fetchPaginate("https://api.example.com/foo", {
+  params: { cursor: "after" },
+  getCursor: (body) => body.pageInfo.endCursor,
+});
+```
+
+### Custom Start or Limit
+
+To start at a page other than the default first page, use the `page` option. For APIs whose pages start at `0`:
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {
@@ -102,34 +121,33 @@ const { items } = await fetchPaginate("https://api.example.com/foo", {
 });
 ```
 
-If you want to start fetching at a later page, use the `page` option:
+To start at a later page:
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {
   params: true, // Assumes `page` parameter.
-  page: 3, // Start at the 3rd page.
+  page: 3, // Start at page 3.
 });
 ```
 
-If you want to fetch with a specific number of items per page, instead of defaulting to the size of the first page (requested without `limit`), you can do:
+To start at a specific offset, set `offset`. You can also set `limit` to control the size of each page:
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {
   params: {
     offset: true,
   },
+  offset: 17, // Start at the 17th item.
   limit: 10, // Fetch 10 items per page.
 });
 ```
 
-If you want to start fetching at a specific offset:
+For cursor-based APIs, set `cursor` to the starting cursor. Use `getCursor` to select the next cursor from each response:
 
 ```js
 const { items } = await fetchPaginate("https://api.example.com/foo", {
-  params: {
-    offset: true,
-  },
-  offset: 17, // Start fetching at the 17th item.
+  cursor: "cursor-from-previous-request",
+  getCursor: "nextCursor",
 });
 ```
 
@@ -244,19 +262,17 @@ query Products($cursor: String) {
 }
 ```
 
-Use `cursor` to specify a dot-separated path to the next cursor in the previous page's parsed response body. The first request has no cursor value:
+Pass the query directly as a string in `graphql`, or use the `query` property when configuring GraphQL options such as `variables` or `operationName`. Use the root-level `getCursor` option to specify a dot-separated path or a function that gets the next cursor from the previous page's parsed response body. The first request has no cursor value:
 
 ```js
 const { items } = await fetchPaginate("https://graphql.example.com", {
-  graphql: {
-    query,
-    cursor: "data.products.pageInfo.endCursor",
-  },
+  graphql: query,
+  getCursor: "data.products.pageInfo.endCursor",
   getItems: (body) => body.data.products.nodes,
 });
 ```
 
-Alternatively, return a string from `variables` to use it as the cursor value (`{ cursor: returnedString }`). As before, return an object to provide other GraphQL variables, or a falsy value to stop paginating after the first call:
+The GraphQL `cursor` option remains supported for compatibility, but `getCursor` is preferred. Alternatively, return a string from `variables` to use it as the cursor value (`{ cursor: returnedString }`). As before, return an object to provide other GraphQL variables, or a falsy value to stop paginating after the first call:
 
 ```js
 const { items } = await fetchPaginate("https://graphql.example.com", {
@@ -269,7 +285,7 @@ const { items } = await fetchPaginate("https://graphql.example.com", {
 });
 ```
 
-If both `cursor` and `variables` are provided, an object returned by `variables` is merged with the path cursor, which takes precedence. A string returned by `variables` is ignored in favor of the path cursor.
+If `getCursor` (or the deprecated GraphQL `cursor`) and `variables` are both provided, an object returned by `variables` is merged with the extracted cursor, which takes precedence. A string returned by `variables` is ignored in favor of the extracted cursor.
 
 ## Options
 
@@ -358,7 +374,7 @@ fetchPaginate("https://api.example.com/orders", { hateoas: "more" });
 
 `boolean | ParamsObject`
 
-Optionally use these if the API paginates with query parameters (either `page`, or `limit` and `offset`), rather than `Link` headers.
+Optionally use these if the API paginates with query parameters (`page`, `limit` and `offset`, or `cursor`), rather than `Link` headers.
 
 If you pass `params: true`, it will use `page` as the default, instead of `limit` and `offset`.
 
@@ -390,29 +406,41 @@ If `offset: true`, it will indicate to use `limit` and `offset` instead of `page
 
 Defaults to `"offset"`.
 
+### `params.cursor`
+
+`string | boolean`
+
+The name of the query parameter to use for a cursor. Use `true` to use the default name, `"cursor"`. Cursor pagination requires a root-level `getCursor` option, which can enable cursor pagination by itself when no other pagination mode is selected.
+
+### `getCursor`
+
+`string | (body) => string | number | falsy`
+
+Gets the cursor from a parsed response body, either with a dot-separated path or a function. The returned cursor is used for the next request's query parameter (default `"cursor"`) or, for GraphQL, as the `cursor` variable. Pagination stops when the value is falsy. The root-level option takes precedence over `graphql.cursor`.
+
 ### `page`
 
 `number`
 
-If using `params` with `page`, this indicates the page at which to start fetching.
-
-Defaults to `1`.
+If using `params` with `page`, this indicates the page at which to start fetching. Defaults to `1`.
 
 ### `offset`
 
 `number`
 
-If using `params` with `offset` and `limit`, this indicates the offset at which to start fetching.
-
-Defaults to `0`.
+If using `params` with `offset` and `limit`, this indicates the offset at which to start fetching. Defaults to `0`.
 
 ### `limit`
 
 `number`
 
-If using `params` with `offset` and `limit`, this indicates the size of each page.
+If using `params` with `offset` and `limit`, this indicates the size of each page. Defaults to the size of the first page fetched.
 
-Defaults to the size of the first page fetched.
+### `cursor`
+
+`string | number`
+
+The cursor to use for the first request when using cursor pagination. For query parameter pagination, it uses the parameter selected by `params.cursor` (default `"cursor"`). For GraphQL, it is sent as the first request's `cursor` variable when `getCursor` or `graphql.cursor` is configured.
 
 ### `fetchOptions`
 
@@ -429,9 +457,10 @@ Use this, e.g., to define your own custom cache wrapper.
 
 ### `graphql`
 
-`{ query: string, operationName?: string, cursor?: string, variables?: ({ page }) => string | Object | falsy }`
+`string | { query: string, operationName?: string, cursor?: string, variables?: ({ page }) => string | Object | falsy }`
 
 Paginate a GraphQL API (see [GraphQL](#graphql)).
+Pass the query directly as a string, or use an object to provide additional GraphQL options.
 Requests are sent as `POST` with a JSON body of `{ query, operationName, variables }`, and `fetchOptions.headers` are merged over the default `Content-Type: application/json`.
 The `next`, `params`, `page`, `limit` and `offset` options are not used.
-`cursor` is a dot-separated path into the previous page's parsed response body; pagination stops when it resolves to a falsy value after the first request. A string returned by `variables` is sent as the `cursor` variable. An object is sent as the variables object, unless `cursor` is also set, in which case it is merged with the path cursor and the path value wins. Pagination also stops when `variables` returns a falsy value after the first call, or when the variables are identical to the previous call.
+`cursor` is a deprecated dot-separated path into the previous page's parsed response body; use root-level `getCursor` instead. A string returned by `variables` is sent as the `cursor` variable. An object is sent as the variables object, unless `cursor` or `getCursor` is also set, in which case it is merged with the extracted cursor and the extracted value wins. Pagination also stops when `variables` returns a falsy value after the first call, or when the variables are identical to the previous call.

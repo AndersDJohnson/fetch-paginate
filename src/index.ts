@@ -4,6 +4,7 @@ export interface FetchPaginateParamsObject {
   page?: boolean | string;
   limit?: boolean | string;
   offset?: boolean | string;
+  cursor?: boolean | string;
 }
 
 export type FetchPaginateParams = FetchPaginateParamsObject | boolean;
@@ -25,6 +26,7 @@ export interface FetchPaginateNextOptions<Item, $Body = any> {
   page: number;
   limit?: number;
   offset: number;
+  cursor?: string | number | false;
   params?: FetchPaginateParams;
   isFirst: boolean;
 }
@@ -82,6 +84,7 @@ export interface FetchPaginateGetFetchArgs<$Body, Item> {
 export interface FetchPaginateGraphQLOptions<$Body> {
   query: string;
   operationName?: string;
+  /** @deprecated Use the root-level `getCursor` option instead. */
   cursor?: string;
   /**
    * Called before each request with `{ page }`, the previous page's parsed body
@@ -100,8 +103,17 @@ export interface FetchPaginateGraphQLOptions<$Body> {
     | false;
 }
 
+export type FetchPaginateGraphQL<$Body> =
+  | FetchPaginateGraphQLOptions<$Body>
+  | string;
+
+export type FetchPaginateGetCursorFunction<$Body> = (
+  body: $Body
+) => string | number | false | null | undefined;
+
 export interface FetchPaginateOptions<$Body, Item> {
-  graphql?: FetchPaginateGraphQLOptions<$Body>;
+  graphql?: FetchPaginateGraphQL<$Body>;
+  getCursor?: string | FetchPaginateGetCursorFunction<$Body>;
   fetchOptions?: ResponseInit;
   until?: FetchPaginateUntilFunction<$Body, Item>;
   getItems?: FetchPaginateItemsFunction<$Body, Item>;
@@ -109,6 +121,7 @@ export interface FetchPaginateOptions<$Body, Item> {
   parse?: FetchPaginateParseFunction<$Body>;
   next?: FetchPaginateNextFunction<Item, $Body> | string;
   hateoas?: boolean | string;
+  cursor?: string | number;
   limit?: number;
   offset?: number;
   params?: FetchPaginateParams;
@@ -176,6 +189,7 @@ const getNextWithParams = <Item>({
   page,
   limit,
   offset,
+  cursor,
   isFirst,
 }: {
   params?: FetchPaginateParams;
@@ -184,11 +198,35 @@ const getNextWithParams = <Item>({
   page: number;
   limit?: number;
   offset: number;
+  cursor?: string | number | false;
   isFirst: boolean;
 }): FetchPaginateNext | void => {
   if (!params) return;
 
   const parsedUrl = new URL(url);
+
+  if (
+    typeof params !== "boolean" &&
+    params.cursor !== undefined &&
+    params.cursor !== false
+  ) {
+    if (isFirst && cursor === undefined) {
+      return {
+        url,
+      };
+    }
+
+    if (cursor === undefined || cursor === false) return;
+
+    const cursorParam =
+      (params.cursor === true ? undefined : params.cursor) || "cursor";
+
+    parsedUrl.searchParams.set(cursorParam, cursor.toString());
+
+    return {
+      url: parsedUrl.toString(),
+    };
+  }
 
   if (!isFirst && !pageItems?.length) return;
 
@@ -241,6 +279,7 @@ const defaultNext = <Item>({
   page,
   limit,
   offset,
+  cursor,
   params,
   isFirst,
 }: FetchPaginateNextOptions<Item>): FetchPaginateNext | void => {
@@ -250,9 +289,18 @@ const defaultNext = <Item>({
     page,
     limit,
     offset,
+    cursor,
     params,
     isFirst,
   });
+
+  if (
+    typeof params !== "boolean" &&
+    params?.cursor !== undefined &&
+    params.cursor !== false
+  ) {
+    return nextWithParams;
+  }
 
   if (nextWithParams) return nextWithParams;
 
@@ -279,6 +327,7 @@ const fetchPaginateIterator = <$Body, Item>(
     fetchOptions: baseFetchOptions,
     getFetch = () => fetch,
     graphql,
+    getCursor,
   } = options;
 
   const next: FetchPaginateNextFunction<Item, $Body> | string =
@@ -291,9 +340,14 @@ const fetchPaginateIterator = <$Body, Item>(
   let prevVariablesJson: string | undefined;
 
   const actualParams: FetchPaginateParamsObject | undefined =
-    params || options.page || options.limit || options.offset
+    params ||
+    options.page ||
+    options.limit ||
+    options.offset ||
+    getCursor ||
+    options.cursor !== undefined
       ? {
-          ...(params === true ? {} : params),
+          ...(typeof params === "object" && params ? params : {}),
         }
       : undefined;
 
@@ -303,6 +357,18 @@ const fetchPaginateIterator = <$Body, Item>(
     } else if (options.limit || options.offset) {
       actualParams.limit = actualParams.limit || true;
       actualParams.offset = actualParams.offset || true;
+    } else if (
+      (getCursor || options.cursor !== undefined) &&
+      params !== true &&
+      actualParams.cursor === undefined &&
+      actualParams.page === undefined &&
+      actualParams.limit === undefined &&
+      actualParams.offset === undefined &&
+      options.page === undefined &&
+      options.limit === undefined &&
+      options.offset === undefined
+    ) {
+      actualParams.cursor = true;
     }
   }
 
@@ -355,29 +421,50 @@ const fetchPaginateIterator = <$Body, Item>(
         }
 
         const prevUrl = nextUrl;
+        const graphqlOptions =
+          typeof graphql === "string" ? { query: graphql } : graphql;
 
         let nextMeta: FetchPaginateNext | void;
 
-        if (graphql) {
-          const previousPage = count === 0 ? undefined : pageBody;
-          const cursor =
-            graphql.cursor !== undefined
-              ? getPath(previousPage, graphql.cursor)
-              : undefined;
-          const variablesResult = graphql.variables
-            ? graphql.variables({ page: previousPage })
+        const getCursorValue = (body: $Body) =>
+          typeof getCursor === "function"
+            ? getCursor(body)
+            : typeof getCursor === "string"
+            ? getPath(body, getCursor)
             : undefined;
 
-          if (count > 0 && graphql.variables && !variablesResult) {
+        if (graphqlOptions) {
+          const previousPage = count === 0 ? undefined : pageBody;
+          const graphqlCursor = getCursor ?? graphqlOptions.cursor;
+          const cursor =
+            graphqlCursor !== undefined && previousPage !== undefined
+              ? typeof graphqlCursor === "function"
+                ? graphqlCursor(previousPage)
+                : getPath(previousPage, graphqlCursor)
+              : count === 0
+              ? options.cursor
+              : undefined;
+          const variablesResult = graphqlOptions.variables
+            ? graphqlOptions.variables({ page: previousPage })
+            : undefined;
+
+          if (count > 0 && graphqlOptions.variables && !variablesResult) {
             return makeShortCircuit();
           }
 
-          if (count > 0 && graphql.cursor !== undefined && !cursor) {
+          if (
+            count > 0 &&
+            graphqlCursor !== undefined &&
+            (cursor === undefined ||
+              cursor === null ||
+              cursor === false ||
+              cursor === "")
+          ) {
             return makeShortCircuit();
           }
 
           const variables: Record<string, unknown> | undefined =
-            graphql.cursor !== undefined
+            graphqlCursor !== undefined
               ? {
                   ...(typeof variablesResult === "object" && variablesResult
                     ? variablesResult
@@ -404,8 +491,8 @@ const fetchPaginateIterator = <$Body, Item>(
               ...(baseFetchOptions?.headers as Record<string, string>),
             },
             body: JSON.stringify({
-              query: graphql.query,
-              operationName: graphql.operationName,
+              query: graphqlOptions.query,
+              operationName: graphqlOptions.operationName,
               variables: variables || undefined,
             }),
           } as ResponseInit;
@@ -414,6 +501,13 @@ const fetchPaginateIterator = <$Body, Item>(
         } else {
           const isFirst = count === 0;
           const body = isFirst ? undefined : pageBody;
+          const cursorValue = isFirst ? options.cursor : getCursorValue(pageBody);
+          const cursor =
+            typeof cursorValue === "string" || typeof cursorValue === "number"
+              ? cursorValue
+              : cursorValue === false
+              ? false
+              : undefined;
 
           const nextResult =
             typeof next === "string"
@@ -425,6 +519,7 @@ const fetchPaginateIterator = <$Body, Item>(
                   pageItems,
                   limit,
                   offset,
+                  cursor,
                   page,
                   params: actualParams,
                   isFirst,
