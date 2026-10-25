@@ -171,6 +171,31 @@ nock(base)
   });
 
 nock(base)
+  .get("/hateoas")
+  .times(Infinity)
+  .reply(200, {
+    list: ["one"],
+    _links: { next: { href: "/hateoas/2" } },
+  })
+  .get("/hateoas/2")
+  .times(Infinity)
+  .reply(200, {
+    list: ["two"],
+    _links: { next: { href: "/hateoas/3" } },
+  })
+  .get("/hateoas/3")
+  .times(Infinity)
+  .reply(200, { list: ["three"], _links: {} });
+
+nock(base)
+  .get("/hateoas-links")
+  .times(Infinity)
+  .reply(200, { list: ["one"], _links: { more: { href: "/hateoas-links/2" } } })
+  .get("/hateoas-links/2")
+  .times(Infinity)
+  .reply(200, { list: ["two"], _links: {} });
+
+nock(base)
   .get("/cursor")
   .reply(200, { list: ["one"], nextCursor: "cursor-1" })
   .get("/cursor")

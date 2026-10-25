@@ -18,9 +18,10 @@ export interface FetchPaginateUntilOptions<$Body, Item> {
   responses: Response[];
 }
 
-export interface FetchPaginateNextOptions<Item> {
+export interface FetchPaginateNextOptions<Item, $Body = any> {
   url: string;
   response?: Response;
+  body?: $Body;
   pageItems: Item[];
   page: number;
   limit?: number;
@@ -47,9 +48,9 @@ export type FetchPaginateMergeFunction<Item> = (
 export type FetchPaginateParseFunction<$Body> = (
   response: Response
 ) => Promise<$Body> | $Body;
-export type FetchPaginateNextFunction<Item> = (
-  nextOptions: FetchPaginateNextOptions<Item>
-) => FetchPaginateNext;
+export type FetchPaginateNextFunction<Item, $Body = any> = (
+  nextOptions: FetchPaginateNextOptions<Item, $Body>
+) => FetchPaginateNext | string | void | undefined;
 
 export interface FetchPaginateIteratorValue<$Body, Item> {
   page?: $Body;
@@ -118,7 +119,8 @@ export interface FetchPaginateOptions<$Body, Item> {
   getItems?: FetchPaginateItemsFunction<$Body, Item>;
   merge?: FetchPaginateMergeFunction<Item>;
   parse?: FetchPaginateParseFunction<$Body>;
-  next?: FetchPaginateNextFunction<Item>;
+  next?: FetchPaginateNextFunction<Item, $Body> | string;
+  hateoas?: boolean | string;
   cursor?: string | number;
   limit?: number;
   offset?: number;
@@ -320,13 +322,19 @@ const fetchPaginateIterator = <$Body, Item>(
     getItems = defaultGetItems,
     merge = defaultMerge,
     parse = defaultParse,
-    next = defaultNext,
+    hateoas,
     until,
     fetchOptions: baseFetchOptions,
     getFetch = () => fetch,
     graphql,
     getCursor,
   } = options;
+
+  const next: FetchPaginateNextFunction<Item, $Body> | string =
+    options.next ??
+    (hateoas
+      ? `_links.${hateoas === true ? "next" : hateoas}.href`
+      : defaultNext);
 
   let fetchOptions = baseFetchOptions;
   let prevVariablesJson: string | undefined;
@@ -491,25 +499,39 @@ const fetchPaginateIterator = <$Body, Item>(
 
           nextMeta = { url };
         } else {
-          const cursorValue =
-            count > 0 ? getCursorValue(pageBody) : options.cursor;
+          const isFirst = count === 0;
+          const body = isFirst ? undefined : pageBody;
+          const cursorValue = isFirst ? options.cursor : getCursorValue(pageBody);
           const cursor =
             typeof cursorValue === "string" || typeof cursorValue === "number"
               ? cursorValue
               : cursorValue === false
               ? false
               : undefined;
-          nextMeta = await next<Item>({
-            url: nextUrl,
-            response,
-            pageItems,
-            limit,
-            offset,
-            cursor,
-            page,
-            params: actualParams,
-            isFirst: count === 0,
-          });
+
+          const nextResult =
+            typeof next === "string"
+              ? getPath(body, next)
+              : await next({
+                  url: nextUrl,
+                  response,
+                  body,
+                  pageItems,
+                  limit,
+                  offset,
+                  cursor,
+                  page,
+                  params: actualParams,
+                  isFirst,
+                });
+
+          if (typeof nextResult === "string" && nextResult) {
+            nextMeta = { url: new URL(nextResult, nextUrl).toString() };
+          } else if (nextResult && typeof nextResult === "object") {
+            nextMeta = nextResult;
+          } else if (isFirst && next !== defaultNext) {
+            nextMeta = { url };
+          }
         }
 
         if (!nextMeta) {

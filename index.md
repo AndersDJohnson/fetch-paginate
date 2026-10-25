@@ -331,6 +331,45 @@ Defaults to always return `false` - to continue to consume until all pages:
 ({ page, pages, response, responses, items, pageItems }) => false;
 ```
 
+### `next`
+
+`string | (args: { url, response, body, pageItems, page, limit, offset, params, isFirst }) => string | { url?, page?, limit?, offset? } | void`
+
+Determines the next request. Either:
+
+- a **function**, called before each request (with `isFirst: true` before the first). Return the next URL as a string, or an object with the next `url` (or `page`, `limit`, `offset`), or a falsy value to stop paginating. If it returns a falsy value on the first call, the original `url` is requested. `body` is the parsed body of the previous page (`undefined` on the first call).
+- a **string**, a dot-separated path (e.g. `"_links.next.href"`) to the next URL in the previous page's parsed body. 
+
+Missing values stop pagination, except before the first request, where there is no previous page yet and the original `url` is requested.
+
+Returned URL strings may be relative; they are resolved against the previous request URL.
+
+Defaults to using `params`, or else the `Link` header's `rel="next"`.
+
+For example, to follow a next link in the response body, as in HATEOAS APIs:
+
+```js
+fetchPaginate("https://api.example.com/orders", {
+  next: ({ body }) => body?._links?.next?.href,
+});
+
+// or equivalently
+fetchPaginate("https://api.example.com/orders", {
+  next: "_links.next.href",
+});
+```
+
+### `hateoas`
+
+`boolean | string`
+
+Shorthand: when `true` and `next` is not set, `next` defaults to `"_links.next.href"`. Pass a string to use a different link name under `_links`, e.g. `"more"` for `"_links.more.href"`.
+
+```js
+fetchPaginate("https://api.example.com/orders", { hateoas: true });
+fetchPaginate("https://api.example.com/orders", { hateoas: "more" });
+```
+
 ### `params`
 
 `boolean | ParamsObject`
