@@ -1,10 +1,18 @@
 import "cross-fetch/polyfill";
+import { jest } from "@jest/globals";
+import { setupServer } from "msw/node";
 import {
   fetchPaginate,
   fetchPaginateIterator,
   FetchPaginateUntilOptions,
 } from "..";
-import { base } from "./nocks";
+import { base, handlers } from "./handlers";
+
+const server = setupServer(...handlers);
+
+beforeAll(() => server.listen({ onUnhandledFrame: "error" }));
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 const linkedUrl = `${base}/linked`;
 const pagedUrl = `${base}/paged`;
@@ -58,11 +66,13 @@ describe("fetchPaginate", () => {
 
   it("should fail to match forwarded fetch options", async () => {
     const fetchOptions = { headers: { Test: "Nope" } };
-    expect(fetchPaginateWrapper("http://api.example.com/headers", {
-      fetchOptions
-    })).rejects.toMatchObject({
-      message: expect.stringMatching(/No match for request/),
-    })
+    await expect(
+      fetchPaginateWrapper("http://api.example.com/headers", {
+        fetchOptions,
+      })
+    ).rejects.toMatchObject({
+      message: expect.stringMatching(/fetch failed/),
+    });
   });
 
   describe("Link header", () => {

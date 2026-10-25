@@ -9,28 +9,46 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "bin": {
+    "fetch-paginate": "./dist/cli.js"
+  },
   "main": "dist/index.js",
   "license": "MIT",
   "repository": "AndersDJohnson/fetch-paginate",
   "funding": "https://github.com/sponsors/AndersDJohnson",
   "scripts": {
-    "test": "jest",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "build": "tsc",
-    "prepublish": "yarn build"
+    "prepublish": "yarn build",
+    "dev:server": "node src/test/server.ts",
+    "dev:cli:p2": "node src/cli.ts http://localhost:54321/pages -i items -p 2",
+    "dev:cli:pages": "node src/cli.ts http://localhost:54321/pages -i items --params.page",
+    "dev:cli:pg": "node src/cli.ts http://localhost:54321/pg -i items --params.page pg",
+    "dev:cli:offset": "node src/cli.ts http://localhost:54321/offset -i items --params.offset",
+    "dev:cli:ofs": "node src/cli.ts http://localhost:54321/ofs -i items --params.offset ofs",
+    "dev:cli:limit": "node src/cli.ts http://localhost:54321/offset -i items -l 3",
+    "dev:cli:lmt": "node src/cli.ts http://localhost:54321/ofs -i items --params.offset ofs --params.limit lmt"
   },
   "devDependencies": {
+    "@msw/serve": "0.11.0",
+    "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
+    "@types/lodash": "^4.17.20",
+    "@types/node": "^26.6.5",
     "@types/parse-link-header": "^2.0.3",
     "cross-fetch": "^3.0.5",
     "eslint": "^5.16.0",
+    "express": "^5.3.0",
     "jest": "^30.2.0",
-    "nock": "^14.0.10",
+    "msw": "3.0.3",
     "prettier": "^2.0.2",
     "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "parse-link-header": "^2.0.0"
+    "lodash": "^4.18.1",
+    "parse-link-header": "^2.0.0",
+    "yargs": "^18.2.0"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
