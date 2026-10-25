@@ -262,13 +262,11 @@ query Products($cursor: String) {
 }
 ```
 
-Use the root-level `getCursor` option to specify a dot-separated path or a function that gets the next cursor from the previous page's parsed response body. The first request has no cursor value:
+Pass the query directly as a string in `graphql`, or use the `query` property when configuring GraphQL options such as `variables` or `operationName`. Use the root-level `getCursor` option to specify a dot-separated path or a function that gets the next cursor from the previous page's parsed response body. The first request has no cursor value:
 
 ```js
 const { items } = await fetchPaginate("https://graphql.example.com", {
-  graphql: {
-    query,
-  },
+  graphql: query,
   getCursor: "data.products.pageInfo.endCursor",
   getItems: (body) => body.data.products.nodes,
 });
@@ -420,9 +418,10 @@ Use this, e.g., to define your own custom cache wrapper.
 
 ### `graphql`
 
-`{ query: string, operationName?: string, cursor?: string, variables?: ({ page }) => string | Object | falsy }`
+`string | { query: string, operationName?: string, cursor?: string, variables?: ({ page }) => string | Object | falsy }`
 
 Paginate a GraphQL API (see [GraphQL](#graphql)).
+Pass the query directly as a string, or use an object to provide additional GraphQL options.
 Requests are sent as `POST` with a JSON body of `{ query, operationName, variables }`, and `fetchOptions.headers` are merged over the default `Content-Type: application/json`.
 The `next`, `params`, `page`, `limit` and `offset` options are not used.
 `cursor` is a deprecated dot-separated path into the previous page's parsed response body; use root-level `getCursor` instead. A string returned by `variables` is sent as the `cursor` variable. An object is sent as the variables object, unless `cursor` or `getCursor` is also set, in which case it is merged with the extracted cursor and the extracted value wins. Pagination also stops when `variables` returns a falsy value after the first call, or when the variables are identical to the previous call.
