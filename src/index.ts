@@ -452,8 +452,10 @@ const fetchPaginateIterator = <$Body, Item>(
               ? { cursor: variablesResult }
               : variablesResult || undefined;
 
-          const usesPage = options.page !== undefined;
-          const usesOffset = options.offset !== undefined;
+          const usesPage = params === true || getCursor === undefined;
+          const usesOffset =
+            (typeof params === "object" && !!params?.offset) ||
+            !!options.offset;
 
           if (
             count > 0 &&
