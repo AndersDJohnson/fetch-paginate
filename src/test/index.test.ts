@@ -468,4 +468,89 @@ describe("fetchPaginate", () => {
 
     expect(items).toEqual(["p1", "p2", "p3"]);
   });
+
+  describe("graphql limit variable", () => {
+    const limitQuery = `query Products($cursor: String, $limit: Int) {
+      products(first: $limit, after: $cursor) {
+        nodes { id name }
+        pageInfo { endCursor hasNextPage }
+      }
+    }`;
+
+    const recordBodies = () => {
+      const bodies: any[] = [];
+      const getFetch = () => (async (input: any, init?: any) => {
+        bodies.push(JSON.parse(init.body));
+        return fetch(input, init);
+      }) as typeof fetch;
+      return { bodies, getFetch };
+    };
+
+    it("should pass the limit option as a variable on every request", async () => {
+      const { bodies, getFetch } = recordBodies();
+      const { items } = await fetchPaginate<any, string>(`${base}/graphql`, {
+        graphql: limitQuery,
+        limit: 10,
+        getCursor: (body) => body.data.products.pageInfo.endCursor,
+        getItems: (body) => body.data.products.list,
+        getFetch,
+      });
+
+      expect(items).toEqual(["p1", "p2", "p3"]);
+      expect(bodies).toHaveLength(3);
+      bodies.forEach((body) => {
+        expect(body.query).toBe(limitQuery);
+        expect(body.variables.limit).toBe(10);
+      });
+      expect(bodies[0].variables.cursor).toBeUndefined();
+      expect(bodies[1].variables.cursor).toBe("cursor-1");
+      expect(bodies[2].variables.cursor).toBe("cursor-2");
+    });
+
+    it("should not inline the limit into the query", async () => {
+      const { bodies, getFetch } = recordBodies();
+      await fetchPaginate<any, string>(`${base}/graphql`, {
+        graphql: limitQuery,
+        limit: 10,
+        getCursor: (body) => body.data.products.pageInfo.endCursor,
+        getItems: (body) => body.data.products.list,
+        getFetch,
+      });
+
+      expect(bodies[0].query).toContain("first: $limit");
+      expect(bodies[0].query).not.toContain("first: 10");
+    });
+
+    it("should let explicit graphql variables override the limit option", async () => {
+      const { bodies, getFetch } = recordBodies();
+      await fetchPaginate<any, string>(`${base}/graphql`, {
+        graphql: {
+          query: limitQuery,
+          variables: ({ page }) => {
+            const cursor = page?.data?.products?.pageInfo?.endCursor;
+            if (page && !cursor) return undefined;
+            return { limit: 5, ...(cursor ? { cursor } : {}) };
+          },
+        },
+        limit: 10,
+        getItems: (body) => body.data.products.list,
+        getFetch,
+      });
+
+      expect(bodies).toHaveLength(3);
+      bodies.forEach((body) => expect(body.variables.limit).toBe(5));
+    });
+
+    it("should not send a limit variable on the first request when no limit option is set", async () => {
+      const { bodies, getFetch } = recordBodies();
+      await fetchPaginate<any, string>(`${base}/graphql`, {
+        graphql: limitQuery,
+        getCursor: (body) => body.data.products.pageInfo.endCursor,
+        getItems: (body) => body.data.products.list,
+        getFetch,
+      });
+
+      expect(bodies[0].variables?.limit).toBeUndefined();
+    });
+  });
 });
