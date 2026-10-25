@@ -119,6 +119,7 @@ export interface FetchPaginateOptions<$Body, Item> {
   merge?: FetchPaginateMergeFunction<Item>;
   parse?: FetchPaginateParseFunction<$Body>;
   next?: FetchPaginateNextFunction<Item>;
+  cursor?: string | number;
   limit?: number;
   offset?: number;
   params?: FetchPaginateParams;
@@ -207,13 +208,13 @@ const getNextWithParams = <Item>({
     params.cursor !== undefined &&
     params.cursor !== false
   ) {
-    if (isFirst) {
+    if (isFirst && cursor === undefined) {
       return {
         url,
       };
     }
 
-    if (!cursor) return;
+    if (cursor === undefined || cursor === false) return;
 
     const cursorParam =
       (params.cursor === true ? undefined : params.cursor) || "cursor";
@@ -331,7 +332,12 @@ const fetchPaginateIterator = <$Body, Item>(
   let prevVariablesJson: string | undefined;
 
   const actualParams: FetchPaginateParamsObject | undefined =
-    params || options.page || options.limit || options.offset || getCursor
+    params ||
+    options.page ||
+    options.limit ||
+    options.offset ||
+    getCursor ||
+    options.cursor !== undefined
       ? {
           ...(typeof params === "object" && params ? params : {}),
         }
@@ -344,7 +350,7 @@ const fetchPaginateIterator = <$Body, Item>(
       actualParams.limit = actualParams.limit || true;
       actualParams.offset = actualParams.offset || true;
     } else if (
-      getCursor &&
+      (getCursor || options.cursor !== undefined) &&
       params !== true &&
       actualParams.cursor === undefined &&
       actualParams.page === undefined &&
@@ -427,6 +433,8 @@ const fetchPaginateIterator = <$Body, Item>(
               ? typeof graphqlCursor === "function"
                 ? graphqlCursor(previousPage)
                 : getPath(previousPage, graphqlCursor)
+              : count === 0
+              ? options.cursor
               : undefined;
           const variablesResult = graphqlOptions.variables
             ? graphqlOptions.variables({ page: previousPage })
@@ -436,7 +444,14 @@ const fetchPaginateIterator = <$Body, Item>(
             return makeShortCircuit();
           }
 
-          if (count > 0 && graphqlCursor !== undefined && !cursor) {
+          if (
+            count > 0 &&
+            graphqlCursor !== undefined &&
+            (cursor === undefined ||
+              cursor === null ||
+              cursor === false ||
+              cursor === "")
+          ) {
             return makeShortCircuit();
           }
 
@@ -476,7 +491,8 @@ const fetchPaginateIterator = <$Body, Item>(
 
           nextMeta = { url };
         } else {
-          const cursorValue = count > 0 ? getCursorValue(pageBody) : undefined;
+          const cursorValue =
+            count > 0 ? getCursorValue(pageBody) : options.cursor;
           const cursor =
             typeof cursorValue === "string" || typeof cursorValue === "number"
               ? cursorValue
