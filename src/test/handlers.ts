@@ -103,6 +103,30 @@ export const handlers = [
   http.get("*/ofs", ({ request }) =>
     offsetResponse(new URL(request.url), "ofs", "lmt")
   ),
+  http.get("*/hateoas", () =>
+    HttpResponse.json({
+      list: ["one"],
+      _links: { next: { href: "/hateoas/2" } },
+    })
+  ),
+  http.get("*/hateoas/2", () =>
+    HttpResponse.json({
+      list: ["two"],
+      _links: { next: { href: "/hateoas/3" } },
+    })
+  ),
+  http.get("*/hateoas/3", () =>
+    HttpResponse.json({ list: ["three"], _links: {} })
+  ),
+  http.get("*/hateoas-links", () =>
+    HttpResponse.json({
+      list: ["one"],
+      _links: { more: { href: "/hateoas-links/2" } },
+    })
+  ),
+  http.get("*/hateoas-links/2", () =>
+    HttpResponse.json({ list: ["two"], _links: {} })
+  ),
   http.get("*/cursor", ({ request }) => {
     const cursor = new URL(request.url).searchParams.get("cursor");
     const page = cursor === "cursor-1" ? 2 : cursor === "cursor-2" ? 3 : 1;
@@ -118,6 +142,18 @@ export const handlers = [
       list: [items[page - 1]],
       nextCursor: page === 1 ? "cursor-1" : null,
     });
+  }),
+  http.get("*/cursor-start", ({ request }) => {
+    const cursor = new URL(request.url).searchParams.get("cursor");
+    return cursor === "cursor-1"
+      ? HttpResponse.json({ list: ["two"], nextCursor: "cursor-2" })
+      : HttpResponse.json({ list: ["three"], nextCursor: null });
+  }),
+  http.get("*/cursor-start-zero", ({ request }) => {
+    const cursor = new URL(request.url).searchParams.get("cursor");
+    return cursor === "0"
+      ? HttpResponse.json({ list: ["zero"], nextCursor: "1" })
+      : HttpResponse.json({ list: ["one"], nextCursor: null });
   }),
   http.get("*/cursor-empty", ({ request }) => {
     const cursor = new URL(request.url).searchParams.get("cursor");
