@@ -440,7 +440,7 @@ const fetchPaginateIterator = <$Body, Item>(
             return makeShortCircuit();
           }
 
-          const variables: Record<string, unknown> | undefined =
+          const baseVariables: Record<string, unknown> | undefined =
             graphqlCursor !== undefined
               ? {
                   ...(typeof variablesResult === "object" && variablesResult
@@ -451,6 +451,11 @@ const fetchPaginateIterator = <$Body, Item>(
               : typeof variablesResult === "string"
               ? { cursor: variablesResult }
               : variablesResult || undefined;
+
+          const variables: Record<string, unknown> | undefined =
+            options.limit !== undefined
+              ? { limit: options.limit, ...baseVariables }
+              : baseVariables;
 
           const variablesJson = JSON.stringify(variables ?? null);
 

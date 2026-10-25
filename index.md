@@ -253,12 +253,23 @@ const { items } = await fetchPaginate("https://api.example.com/foo");
 For GraphQL APIs that use cursor pagination, declare and use a `$cursor` variable in the query. See [GraphQL cursor pagination](https://graphql.org/learn/pagination/) for more about the concept.
 
 ```graphql
-query Products($cursor: String) {
-  products(first: 10, after: $cursor) {
+query Products($cursor: String, $limit: Int) {
+  products(first: $limit, after: $cursor) {
     nodes { id name }
     pageInfo { endCursor hasNextPage }
   }
 }
+```
+
+If the `limit` option is set, it is sent as the `limit` variable, so you can use it as the `first` argument on a node, as above (explicit `variables` take precedence).
+
+```js
+const { items } = await fetchPaginate("https://graphql.example.com", {
+  graphql: query,
+  limit: 10,
+  getCursor: "data.products.pageInfo.endCursor",
+  getItems: (body) => body.data.products.nodes,
+});
 ```
 
 Pass the query directly as a string in `graphql`, or use the `query` property when configuring GraphQL options such as `variables` or `operationName`. Use the root-level `getCursor` option to specify a dot-separated path or a function that gets the next cursor from the previous page's parsed response body. The first request has no cursor value:
@@ -422,5 +433,5 @@ Use this, e.g., to define your own custom cache wrapper.
 Paginate a GraphQL API (see [GraphQL](#graphql)).
 Pass the query directly as a string, or use an object to provide additional GraphQL options.
 Requests are sent as `POST` with a JSON body of `{ query, operationName, variables }`, and `fetchOptions.headers` are merged over the default `Content-Type: application/json`.
-The `next`, `params`, `page`, `limit` and `offset` options are not used.
+The `next`, `params`, `page` and `offset` options are not used. The `limit` option, if set, is sent as the `limit` variable.
 `cursor` is a deprecated dot-separated path into the previous page's parsed response body; use root-level `getCursor` instead. A string returned by `variables` is sent as the `cursor` variable. An object is sent as the variables object, unless `cursor` or `getCursor` is also set, in which case it is merged with the extracted cursor and the extracted value wins. Pagination also stops when `variables` returns a falsy value after the first call, or when the variables are identical to the previous call.
