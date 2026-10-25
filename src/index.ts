@@ -50,7 +50,7 @@ export type FetchPaginateParseFunction<$Body> = (
 ) => Promise<$Body> | $Body;
 export type FetchPaginateNextFunction<Item, $Body = any> = (
   nextOptions: FetchPaginateNextOptions<Item, $Body>
-) => FetchPaginateNext | string | void | undefined;
+) => FetchPaginateNext | string | undefined;
 
 export interface FetchPaginateIteratorValue<$Body, Item> {
   page?: $Body;
@@ -161,7 +161,7 @@ const getNextFromLinkHeader = ({
   response?: Response;
   url: string;
   isFirst: boolean;
-}): { url: string } | void => {
+}): { url: string } | undefined => {
   if (isFirst)
     return {
       url,
@@ -200,7 +200,7 @@ const getNextWithParams = <Item>({
   offset: number;
   cursor?: string | number | false;
   isFirst: boolean;
-}): FetchPaginateNext | void => {
+}): FetchPaginateNext | undefined => {
   if (!params) return;
 
   const parsedUrl = new URL(url);
@@ -282,7 +282,7 @@ const defaultNext = <Item>({
   cursor,
   params,
   isFirst,
-}: FetchPaginateNextOptions<Item>): FetchPaginateNext | void => {
+}: FetchPaginateNextOptions<Item>): FetchPaginateNext | undefined => {
   const nextWithParams = getNextWithParams({
     url,
     pageItems,
@@ -424,7 +424,7 @@ const fetchPaginateIterator = <$Body, Item>(
         const graphqlOptions =
           typeof graphql === "string" ? { query: graphql } : graphql;
 
-        let nextMeta: FetchPaginateNext | void;
+        let nextMeta: FetchPaginateNext | undefined;
 
         const getCursorValue = (body: $Body) =>
           typeof getCursor === "function"
