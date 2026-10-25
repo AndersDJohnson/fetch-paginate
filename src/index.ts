@@ -463,7 +463,7 @@ const fetchPaginateIterator = <$Body, Item>(
             return makeShortCircuit();
           }
 
-          const variables: Record<string, unknown> | undefined =
+          const baseVariables: Record<string, unknown> | undefined =
             graphqlCursor !== undefined
               ? {
                   ...(typeof variablesResult === "object" && variablesResult
@@ -474,6 +474,48 @@ const fetchPaginateIterator = <$Body, Item>(
               : typeof variablesResult === "string"
               ? { cursor: variablesResult }
               : variablesResult || undefined;
+
+          const { cursor: _cursorParam, ...paramsWithoutCursor } =
+            actualParams ?? {};
+
+          const nextWithParams = getNextWithParams({
+            params: paramsWithoutCursor,
+            pageItems,
+            url,
+            page,
+            limit,
+            offset,
+            isFirst: count === 0,
+          });
+
+          if (
+            count > 0 &&
+            !nextWithParams &&
+            graphqlCursor === undefined &&
+            !graphqlOptions.variables
+          ) {
+            return makeShortCircuit();
+          }
+
+          const nextLimit =
+            nextWithParams?.limit ??
+            limit ??
+            (count > 0 ? pageItems.length : undefined);
+
+          const pagingVariables: Record<string, unknown> = {
+            ...(nextLimit !== undefined ? { limit: nextLimit } : {}),
+            ...(nextWithParams?.page !== undefined
+              ? { page: nextWithParams.page }
+              : {}),
+            ...(nextWithParams?.offset !== undefined
+              ? { offset: nextWithParams.offset }
+              : {}),
+          };
+
+          const variables: Record<string, unknown> | undefined =
+            Object.keys(pagingVariables).length > 0
+              ? { ...pagingVariables, ...baseVariables }
+              : baseVariables;
 
           const variablesJson = JSON.stringify(variables ?? null);
 
@@ -497,7 +539,12 @@ const fetchPaginateIterator = <$Body, Item>(
             }),
           } as ResponseInit;
 
-          nextMeta = { url };
+          nextMeta = {
+            url,
+            limit: nextLimit,
+            offset: nextWithParams?.offset,
+            page: nextWithParams?.page,
+          };
         } else {
           const isFirst = count === 0;
           const body = isFirst ? undefined : pageBody;
