@@ -20,6 +20,7 @@ type Item = string;
 
 interface $Body {
   list: Item[];
+  nextCursor?: string | null;
 }
 
 const fetchPaginateMakeIteratorWrapper = (url: string, opts?: any) =>
@@ -256,6 +257,65 @@ describe("fetchPaginate", () => {
     });
   });
 
+  it("should paginate with next URL from response body", async () => {
+    const { items, pages } = await fetchPaginateWrapper(`${base}/hateoas`, {
+      next: ({ url, body, isFirst }: any) => {
+        if (isFirst) return { url };
+        const href = body?._links?.next?.href;
+        return href ? { url: new URL(href, url).toString() } : undefined;
+      },
+    });
+    expect(pages).toHaveLength(3);
+    expect(items).toEqual(["one", "two", "three"]);
+  });
+
+  it("should paginate with next returning a url string", async () => {
+    const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
+      next: ({ body }: any) => body?._links?.next?.href,
+    });
+    expect(items).toEqual(["one", "two", "three"]);
+  });
+
+  it("should paginate with next as a body path", async () => {
+    const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
+      next: "_links.next.href",
+    });
+    expect(items).toEqual(["one", "two", "three"]);
+  });
+
+  it("should paginate with hateoas", async () => {
+    const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
+      hateoas: true,
+    });
+    expect(items).toEqual(["one", "two", "three"]);
+  });
+
+  it("should paginate with hateoas link name", async () => {
+    const { items } = await fetchPaginateWrapper(`${base}/hateoas-links`, {
+      hateoas: "more",
+    });
+    expect(items).toEqual(["one", "two"]);
+  });
+
+  it("should not stop on the first call when next finds no value", async () => {
+    const calls: boolean[] = [];
+    const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
+      next: ({ body, isFirst }: any) => {
+        calls.push(isFirst);
+        return body?._links?.next?.href;
+      },
+    });
+    expect(calls[0]).toBe(true);
+    expect(items).toEqual(["one", "two", "three"]);
+  });
+
+  it("should stop when next path is missing", async () => {
+    const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
+      next: "_links.nope.href",
+    });
+    expect(items).toEqual(["one"]);
+  });
+
   it("should paginate graphql with variables from previous page", async () => {
     const { items, pages } = await fetchPaginate<any, string>(
       `${base}/graphql`,
@@ -273,5 +333,224 @@ describe("fetchPaginate", () => {
     );
     expect(pages).toHaveLength(3);
     expect(items).toEqual(["p1", "p2", "p3"]);
+  });
+
+  const productsQuery = `query Products($cursor: String) {
+    products(first: 10, after: $cursor) {
+      nodes { id name }
+      pageInfo { endCursor hasNextPage }
+    }
+  }`;
+
+  it("should paginate graphql with a cursor path", async () => {
+    const { items, pages } = await fetchPaginate<any, string>(
+      `${base}/graphql`,
+      {
+        graphql: {
+          query: productsQuery,
+          cursor: "data.products.pageInfo.endCursor",
+        },
+        getItems: (body) => body.data.products.list,
+      }
+    );
+    expect(pages).toHaveLength(3);
+    expect(items).toEqual(["p1", "p2", "p3"]);
+  });
+
+  it("should use a string returned by graphql variables as the cursor", async () => {
+    const { items, pages } = await fetchPaginate<any, string>(
+      `${base}/graphql`,
+      {
+        graphql: {
+          query: productsQuery,
+          variables: ({ page }) =>
+            page?.data?.products?.pageInfo?.endCursor,
+        },
+        getItems: (body) => body.data.products.list,
+      }
+    );
+    expect(pages).toHaveLength(3);
+    expect(items).toEqual(["p1", "p2", "p3"]);
+  });
+
+  it("should paginate with a cursor query parameter using a response path", async () => {
+    const { items } = await fetchPaginate<$Body, Item>(`${base}/cursor`, {
+      getCursor: "nextCursor",
+      getItems,
+    });
+
+    expect(items).toEqual(["one", "two", "three"]);
+  });
+
+  it("should paginate from a starting cursor", async () => {
+    const { items } = await fetchPaginate<$Body, Item>(
+      `${base}/cursor-start`,
+      {
+        cursor: "cursor-1",
+        getCursor: "nextCursor",
+        getItems,
+      }
+    );
+
+    expect(items).toEqual(["two", "three"]);
+  });
+
+  it("should paginate from a numeric zero cursor", async () => {
+    const { items } = await fetchPaginate<$Body, Item>(
+      `${base}/cursor-start-zero`,
+      {
+        cursor: 0,
+        getCursor: "nextCursor",
+        getItems,
+      }
+    );
+
+    expect(items).toEqual(["zero", "one"]);
+  });
+
+  it("should start GraphQL cursor pagination from a cursor", async () => {
+    const { items } = await fetchPaginate<any, string>(`${base}/graphql`, {
+      graphql: {
+        query: productsQuery,
+      },
+      cursor: "cursor-1",
+      getCursor: (body) => body.data.products.pageInfo.endCursor,
+      getItems: (body) => body.data.products.list,
+    });
+
+    expect(items).toEqual(["p2", "p3"]);
+  });
+
+  it("should paginate with a custom cursor parameter using a function", async () => {
+    const { items } = await fetchPaginate<$Body, Item>(
+      `${base}/cursor-custom`,
+      {
+        params: { cursor: "after" },
+        getCursor: (body) => body.nextCursor,
+        getItems,
+      }
+    );
+
+    expect(items).toEqual(["one", "two"]);
+  });
+
+  it("should follow a cursor after an empty page", async () => {
+    const { items } = await fetchPaginate<$Body, Item>(
+      `${base}/cursor-empty`,
+      {
+        params: { cursor: true },
+        getCursor: "nextCursor",
+        getItems,
+      }
+    );
+
+    expect(items).toEqual(["two"]);
+  });
+
+  it("should use root getCursor for GraphQL cursor pagination", async () => {
+    const { items } = await fetchPaginate<any, string>(`${base}/graphql`, {
+      graphql: {
+        query: productsQuery,
+      },
+      getCursor: (body) => body.data.products.pageInfo.endCursor,
+      getItems: (body) => body.data.products.list,
+    });
+
+    expect(items).toEqual(["p1", "p2", "p3"]);
+  });
+
+  it("should accept a GraphQL query string directly", async () => {
+    const { items } = await fetchPaginate<any, string>(`${base}/graphql`, {
+      graphql: productsQuery,
+      getCursor: (body) => body.data.products.pageInfo.endCursor,
+      getItems: (body) => body.data.products.list,
+    });
+
+    expect(items).toEqual(["p1", "p2", "p3"]);
+  });
+
+  describe("graphql limit variable", () => {
+    const limitQuery = `query Products($cursor: String, $limit: Int) {
+      products(first: $limit, after: $cursor) {
+        nodes { id name }
+        pageInfo { endCursor hasNextPage }
+      }
+    }`;
+
+    const recordBodies = () => {
+      const bodies: any[] = [];
+      const getFetch = () => (async (input: any, init?: any) => {
+        bodies.push(JSON.parse(init.body));
+        return fetch(input, init);
+      }) as typeof fetch;
+      return { bodies, getFetch };
+    };
+
+    it("should pass the limit option as a variable on every request", async () => {
+      const { bodies, getFetch } = recordBodies();
+      const { items } = await fetchPaginate<any, string>(`${base}/graphql`, {
+        graphql: limitQuery,
+        limit: 10,
+        getCursor: (body) => body.data.products.pageInfo.endCursor,
+        getItems: (body) => body.data.products.list,
+        getFetch,
+      });
+
+      expect(items).toEqual(["p1", "p2", "p3"]);
+      expect(bodies).toHaveLength(3);
+      bodies.forEach((body) => {
+        expect(body.query).toBe(limitQuery);
+        expect(body.variables.limit).toBe(10);
+      });
+      expect(bodies[0].variables.cursor).toBeUndefined();
+      expect(bodies[1].variables.cursor).toBe("cursor-1");
+      expect(bodies[2].variables.cursor).toBe("cursor-2");
+    });
+
+    it("should not inline the limit into the query", async () => {
+      const { bodies, getFetch } = recordBodies();
+      await fetchPaginate<any, string>(`${base}/graphql`, {
+        graphql: limitQuery,
+        limit: 10,
+        getCursor: (body) => body.data.products.pageInfo.endCursor,
+        getItems: (body) => body.data.products.list,
+        getFetch,
+      });
+
+      expect(bodies[0].query).toContain("first: $limit");
+      expect(bodies[0].query).not.toContain("first: 10");
+    });
+
+    it("should let explicit graphql variables override the limit option", async () => {
+      const { bodies, getFetch } = recordBodies();
+      await fetchPaginate<any, string>(`${base}/graphql`, {
+        graphql: {
+          query: limitQuery,
+          variables: ({ page }) => {
+            const cursor = page?.data?.products?.pageInfo?.endCursor;
+            if (page && !cursor) return undefined;
+            return { limit: 5, ...(cursor ? { cursor } : {}) };
+          },
+        },
+        limit: 10,
+        getItems: (body) => body.data.products.list,
+        getFetch,
+      });
+
+      expect(bodies).toHaveLength(3);
+      bodies.forEach((body) => expect(body.variables.limit).toBe(5));
+    });
+
+    it("should not send a limit variable on the first request when no limit option is set", async () => {
+      const { bodies, getFetch } = recordBodies();
+      await fetchPaginate<any, string>(`${base}/graphql`, {
+        graphql: limitQuery,
+        getCursor: (body) => body.data.products.pageInfo.endCursor,
+        getItems: (body) => body.data.products.list,
+        getFetch,
+      });
+
+      expect(bodies[0].variables?.limit).toBeUndefined();
+    });
   });
 });
