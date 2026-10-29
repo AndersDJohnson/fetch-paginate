@@ -8,8 +8,10 @@
     "rootDir": "src",
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "types": ["jest"],
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true
   },
-  "include": ["src/*"]
+  "include": ["src/**/*"],
+  "exclude": ["src/test/**/*"]
 }
