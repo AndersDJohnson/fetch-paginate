@@ -660,7 +660,7 @@ const fetchPaginateIterator = <$Body, Item>(
               );
             }
 
-            return eachPageItems;
+            return eachPageItems as Item[];
           })
         );
 

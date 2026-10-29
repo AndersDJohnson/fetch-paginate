@@ -14,7 +14,7 @@ const offsetUrl = `${base}/offset`;
 const offsetLimitUrl = `${base}/offset-limit`;
 const offsetEmptyEndUrl = `${base}/offset-empty-end`;
 
-const getItems = (data: { list?: string[] }) => data.list;
+const getItems = (data: { list?: string[] }) => data.list ?? [];
 
 type Item = string;
 
