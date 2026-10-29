@@ -3,6 +3,7 @@ import { describe, it, mock } from "node:test";
 import {
   fetchPaginate,
   fetchPaginateIterator,
+  type FetchPaginateGetFetchArgs,
   type FetchPaginateUntilOptions,
 } from "../index.ts";
 import { base } from "./nocks.ts";
@@ -175,8 +176,10 @@ describe("fetchPaginate", () => {
   describe("getFetch", () => {
     it("should work", async () => {
       const body = '{"list":[{"foo":1}]}';
-      const customFetch = mock.fn(async () => new Response(body));
-      const getFetch = mock.fn(() => customFetch);
+      const customFetch = mock.fn<typeof fetch>(async () => new Response(body));
+      const getFetch = mock.fn(
+        (args: FetchPaginateGetFetchArgs<$Body, Item>) => customFetch
+      );
       const url = "http://api.example.com/one";
       const fetchOptions = { headers: { Test: "Yes" } };
       await fetchPaginateWrapper(url, { getFetch, fetchOptions });

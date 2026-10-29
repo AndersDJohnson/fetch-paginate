@@ -19,6 +19,7 @@
     "prepublish": "yarn build"
   },
   "devDependencies": {
+    "@types/node": "^22.20.5",
     "@types/parse-link-header": "^2.0.3",
     "eslint": "^5.16.0",
     "nock": "^14.0.10",
