@@ -1,4 +1,5 @@
 import "cross-fetch/polyfill";
+import { mock } from "node:test";
 import {
   fetchPaginate,
   fetchPaginateIterator,
@@ -178,13 +179,13 @@ describe("fetchPaginate", () => {
   describe("getFetch", () => {
     it("should work", async () => {
       const body = '{"list":[{"foo":1}]}';
-      const customFetch = jest.fn(async () => new Response(body));
-      const getFetch = jest.fn(() => customFetch);
+      const customFetch = mock.fn(async () => new Response(body));
+      const getFetch = mock.fn(() => customFetch);
       const url = "http://api.example.com/one";
       const fetchOptions = { headers: { Test: "Yes" } };
       await fetchPaginateWrapper(url, { getFetch, fetchOptions });
-      expect(getFetch).toHaveBeenCalledTimes(1);
-      expect(getFetch).toHaveBeenCalledWith({
+      expect(getFetch.mock.callCount()).toBe(1);
+      expect(getFetch.mock.calls[0].arguments[0]).toEqual({
         url,
         fetchOptions,
         offset: 0,
@@ -199,21 +200,21 @@ describe("fetchPaginate", () => {
           url,
         },
       });
-      expect(customFetch).toHaveBeenCalledTimes(1);
-      expect(customFetch).toHaveBeenCalledWith(url, fetchOptions);
+      expect(customFetch.mock.callCount()).toBe(1);
+      expect(customFetch.mock.calls[0].arguments).toEqual([url, fetchOptions]);
     });
 
     it("should resolve async", async () => {
       const body = '{"list":[{"foo":1}]}';
-      const customFetch = jest.fn(async () => new Response(body));
-      const getFetch = jest.fn(async () => customFetch);
+      const customFetch = mock.fn(async () => new Response(body));
+      const getFetch = mock.fn(async () => customFetch);
       const url = "http://api.example.com/one";
       const fetchOptions = { headers: { Test: "Yes" } };
       await fetchPaginateWrapper(url, { getFetch, fetchOptions });
     });
 
     it("should fallback to fetch when not resolved", async () => {
-      const getFetch = jest.fn(() => {});
+      const getFetch = mock.fn(() => {});
       const url = "http://api.example.com/one";
       const fetchOptions = { headers: { Test: "Yes" } };
       const { items } = await fetchPaginateWrapper(url, {
@@ -224,7 +225,7 @@ describe("fetchPaginate", () => {
     });
 
     it("should fallback to fetch when not resolved async", async () => {
-      const getFetch = jest.fn(async () => {});
+      const getFetch = mock.fn(async () => {});
       const url = "http://api.example.com/one";
       const fetchOptions = { headers: { Test: "Yes" } };
       const { items } = await fetchPaginateWrapper(url, {
