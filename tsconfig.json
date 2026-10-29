@@ -8,7 +8,6 @@
     "rootDir": "src",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": [],
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true
   },
