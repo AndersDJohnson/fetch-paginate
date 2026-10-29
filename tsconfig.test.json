@@ -3,6 +3,6 @@
   "include": ["src/**/*", "src/test/**/*"],
   "exclude": [],
   "compilerOptions": {
-    "types": ["node", "jest"]
+    "types": ["node"]
   }
 }
