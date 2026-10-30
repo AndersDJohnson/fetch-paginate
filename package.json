@@ -24,7 +24,7 @@
     "eslint": "^5.16.0",
     "nock": "^15.0.5",
     "prettier": "^3.9.10",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   },
   "dependencies": {
     "parse-link-header": "^2.0.0"
