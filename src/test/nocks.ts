@@ -142,7 +142,8 @@ nock(base)
 nock(base)
   .post("/graphql")
   .times(Infinity)
-  .reply(200, (_uri, body: any) => {
+  .reply(200, async (request) => {
+    const body = await request.json() as any;
     const cursor = body.variables?.cursor;
     if (body.query.includes("query Products")) {
       const page = cursor === "cursor-1" ? 2 : cursor === "cursor-2" ? 3 : 1;

@@ -22,7 +22,7 @@
     "@types/node": "^22.20.5",
     "@types/parse-link-header": "^2.0.3",
     "eslint": "^5.16.0",
-    "nock": "^14.0.10",
+    "nock": "^15.0.5",
     "prettier": "^3.9.10",
     "typescript": "^6.0.3"
   },

@@ -40,7 +40,7 @@ const fetchPaginateWrapper = (url: string, opts?: any) =>
 describe("fetchPaginate", () => {
   it("should handle non-paginated requests", async () => {
     const { items } = await fetchPaginateWrapper("http://api.example.com/one");
-    assert.deepEqual(items, ["one"]);
+    assert.deepStrictEqual(items, ["one"]);
   });
 
   it("should return responses for non-paginated requests", async () => {
@@ -55,21 +55,23 @@ describe("fetchPaginate", () => {
     const { items } = await fetchPaginateWrapper("http://api.example.com/headers", {
       fetchOptions
     });
-    assert.deepEqual(items, ["one"]);
+    assert.deepStrictEqual(items, ["one"]);
   })
 
   it("should fail to match forwarded fetch options", async () => {
     const fetchOptions = { headers: { Test: "Nope" } };
     await assert.rejects(
-      fetchPaginateWrapper("http://api.example.com/headers", { fetchOptions }),
-      { message: /No match for request/ }
+      fetchPaginateWrapper("http://api.example.com/headers", {
+        fetchOptions,
+      }),
+      /failed page call 1/
     );
   });
 
   describe("Link header", () => {
     it("should return responses when paginated", async () => {
       const { responses } = await fetchPaginateWrapper(linkedUrl);
-      assert.ok(responses[responses.length - 1]);
+      assert.notEqual(responses[responses.length - 1], undefined);
       assert.equal(
         responses[responses.length - 1].headers.get("link"),
         '<http://api.example.com/linked?page=3>; rel="last"'
@@ -78,8 +80,11 @@ describe("fetchPaginate", () => {
 
     it("should return all pages when paginated", async () => {
       const { pages, responses } = await fetchPaginateWrapper(linkedUrl);
-      assert.ok(responses.every((response) => response.ok));
-      assert.deepEqual(pages, [
+      assert.deepStrictEqual(
+        responses.map((response) => response.ok),
+        [true, true, true]
+      );
+      assert.deepStrictEqual(pages, [
         {
           list: ["one"],
         },
@@ -94,14 +99,14 @@ describe("fetchPaginate", () => {
 
     it("should paginate", async () => {
       const { items } = await fetchPaginateWrapper(linkedUrl);
-      assert.deepEqual(items, ["one", "two", "three"]);
+      assert.deepStrictEqual(items, ["one", "two", "three"]);
     });
 
     it("should paginate until told not to", async () => {
       const until = ({ pages }: FetchPaginateUntilOptions<any, string>) =>
         pages && pages.length === 2;
       const { items } = await fetchPaginateWrapper(linkedUrl, { until });
-      assert.deepEqual(items, ["one", "two"]);
+      assert.deepStrictEqual(items, ["one", "two"]);
     });
 
     it("should paginate until promise told not to", async () => {
@@ -110,21 +115,21 @@ describe("fetchPaginate", () => {
           setTimeout(() => resolve(pages.length === 2), 100);
         });
       const { items } = await fetchPaginateWrapper(linkedUrl, { until });
-      assert.deepEqual(items, ["one", "two"]);
+      assert.deepStrictEqual(items, ["one", "two"]);
     });
 
     it("should paginate until async told not to", async () => {
       const until = async ({ pages }: FetchPaginateUntilOptions<any, string>) =>
         pages.length === 2;
       const { items } = await fetchPaginateWrapper(linkedUrl, { until });
-      assert.deepEqual(items, ["one", "two"]);
+      assert.deepStrictEqual(items, ["one", "two"]);
     });
   });
 
   describe("params - page", () => {
     it("should paginate", async () => {
       const { items } = await fetchPaginateWrapper(pagedUrl, { params: true });
-      assert.deepEqual(items, ["one", "two", "three"]);
+      assert.deepStrictEqual(items, ["one", "two", "three"]);
     });
 
     it("should paginate from page 0", async () => {
@@ -132,21 +137,21 @@ describe("fetchPaginate", () => {
         params: true,
         page: 0,
       });
-      assert.deepEqual(items, ["one", "two", "three"]);
+      assert.deepStrictEqual(items, ["one", "two", "three"]);
     });
 
     it("should paginate from page 2", async () => {
       const { items } = await fetchPaginateWrapper(pagedUrl, {
         page: 2,
       });
-      assert.deepEqual(items, ["two", "three"]);
+      assert.deepStrictEqual(items, ["two", "three"]);
     });
 
     it("should paginate until empty end", async () => {
       const { items } = await fetchPaginateWrapper(pagedEmptyEndUrl, {
         params: true,
       });
-      assert.deepEqual(items, ["one", "two", "three"]);
+      assert.deepStrictEqual(items, ["one", "two", "three"]);
     });
   });
 
@@ -155,21 +160,21 @@ describe("fetchPaginate", () => {
       const { items } = await fetchPaginateWrapper(offsetUrl, {
         params: { offset: true },
       });
-      assert.deepEqual(items, ["one", "two", "three"]);
+      assert.deepStrictEqual(items, ["one", "two", "three"]);
     });
 
     it("should paginate with specified limit", async () => {
       const { items } = await fetchPaginateWrapper(offsetLimitUrl, {
         limit: 1,
       });
-      assert.deepEqual(items, ["one", "two", "three"]);
+      assert.deepStrictEqual(items, ["one", "two", "three"]);
     });
 
     it("should paginate until empty end", async () => {
       const { items } = await fetchPaginateWrapper(offsetEmptyEndUrl, {
         params: { offset: true },
       });
-      assert.deepEqual(items, ["one", "two", "three"]);
+      assert.deepStrictEqual(items, ["one", "two", "three"]);
     });
   });
 
@@ -183,22 +188,43 @@ describe("fetchPaginate", () => {
       const url = "http://api.example.com/one";
       const fetchOptions = { headers: { Test: "Yes" } };
       await fetchPaginateWrapper(url, { getFetch, fetchOptions });
-      assert.equal(getFetch.mock.calls.length, 1);
-      const [getFetchArgs] = getFetch.mock.calls[0].arguments;
-      assert.equal(getFetchArgs.url, url);
-      assert.deepEqual(getFetchArgs.fetchOptions, fetchOptions);
-      assert.equal(getFetchArgs.offset, 0);
-      assert.equal(getFetchArgs.page, 1);
-      assert.deepEqual(getFetchArgs.prev.items, []);
-      assert.equal(getFetchArgs.prev.offset, 0);
-      assert.equal(getFetchArgs.prev.page, 1);
-      assert.deepEqual(getFetchArgs.prev.pageItems, []);
-      assert.deepEqual(getFetchArgs.prev.pages, [{ list: [{ foo: 1 }] }]);
-      assert.equal(getFetchArgs.prev.responses.length, 1);
-      assert.ok(getFetchArgs.prev.responses[0] instanceof Response);
-      assert.equal(getFetchArgs.prev.url, url);
-      assert.equal(customFetch.mock.calls.length, 1);
-      assert.deepEqual(customFetch.mock.calls[0].arguments, [url, fetchOptions]);
+      assert.equal(getFetch.mock.callCount(), 1);
+      const getFetchOptions = getFetch.mock.calls[0].arguments[0];
+      const { responses, ...previous } = getFetchOptions.prev;
+      assert.equal(responses.length, 1);
+      assert.ok(responses[0] instanceof Response);
+      assert.deepStrictEqual(
+        {
+          url: getFetchOptions.url,
+          fetchOptions: getFetchOptions.fetchOptions,
+          offset: getFetchOptions.offset,
+          page: getFetchOptions.page,
+          prev: {
+            items: previous.items,
+            offset: previous.offset,
+            page: previous.page,
+            pageItems: previous.pageItems,
+            pages: previous.pages,
+            url: previous.url,
+          },
+        },
+        {
+          url,
+          fetchOptions,
+          offset: 0,
+          page: 1,
+          prev: {
+            items: [],
+            offset: 0,
+            page: 1,
+            pageItems: [],
+            pages: [{ list: [{ foo: 1 }] }],
+            url,
+          },
+        },
+      );
+      assert.equal(customFetch.mock.callCount(), 1);
+      assert.deepStrictEqual(customFetch.mock.calls[0].arguments, [url, fetchOptions]);
     });
 
     it("should resolve async", async () => {
@@ -218,7 +244,7 @@ describe("fetchPaginate", () => {
         getFetch,
         fetchOptions,
       });
-      assert.deepEqual(items, ["one"]);
+      assert.deepStrictEqual(items, ["one"]);
     });
 
     it("should fallback to fetch when not resolved async", async () => {
@@ -229,7 +255,7 @@ describe("fetchPaginate", () => {
         getFetch,
         fetchOptions,
       });
-      assert.deepEqual(items, ["one"]);
+      assert.deepStrictEqual(items, ["one"]);
     });
   });
 
@@ -242,8 +268,8 @@ describe("fetchPaginate", () => {
         allItems.push(items);
         mergedPageItems = [...mergedPageItems, ...pageItems];
       }
-      assert.deepEqual(mergedPageItems, ["one", "two", "three"]);
-      assert.deepEqual(allItems, [
+      assert.deepStrictEqual(mergedPageItems, ["one", "two", "three"]);
+      assert.deepStrictEqual(allItems, [
         ["one"],
         ["one", "two"],
         ["one", "two", "three"],
@@ -251,7 +277,7 @@ describe("fetchPaginate", () => {
 
       const result = iterator.getResult();
 
-      assert.deepEqual(result.items, ["one", "two", "three"]);
+      assert.deepStrictEqual(result.items, ["one", "two", "three"]);
     });
   });
 
@@ -264,35 +290,35 @@ describe("fetchPaginate", () => {
       },
     });
     assert.equal(pages.length, 3);
-    assert.deepEqual(items, ["one", "two", "three"]);
+    assert.deepStrictEqual(items, ["one", "two", "three"]);
   });
 
   it("should paginate with next returning a url string", async () => {
     const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
       next: ({ body }: any) => body?._links?.next?.href,
     });
-    assert.deepEqual(items, ["one", "two", "three"]);
+    assert.deepStrictEqual(items, ["one", "two", "three"]);
   });
 
   it("should paginate with next as a body path", async () => {
     const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
       next: "_links.next.href",
     });
-    assert.deepEqual(items, ["one", "two", "three"]);
+    assert.deepStrictEqual(items, ["one", "two", "three"]);
   });
 
   it("should paginate with hateoas", async () => {
     const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
       hateoas: true,
     });
-    assert.deepEqual(items, ["one", "two", "three"]);
+    assert.deepStrictEqual(items, ["one", "two", "three"]);
   });
 
   it("should paginate with hateoas link name", async () => {
     const { items } = await fetchPaginateWrapper(`${base}/hateoas-links`, {
       hateoas: "more",
     });
-    assert.deepEqual(items, ["one", "two"]);
+    assert.deepStrictEqual(items, ["one", "two"]);
   });
 
   it("should not stop on the first call when next finds no value", async () => {
@@ -304,14 +330,14 @@ describe("fetchPaginate", () => {
       },
     });
     assert.equal(calls[0], true);
-    assert.deepEqual(items, ["one", "two", "three"]);
+    assert.deepStrictEqual(items, ["one", "two", "three"]);
   });
 
   it("should stop when next path is missing", async () => {
     const { items } = await fetchPaginateWrapper(`${base}/hateoas`, {
       next: "_links.nope.href",
     });
-    assert.deepEqual(items, ["one"]);
+    assert.deepStrictEqual(items, ["one"]);
   });
 
   it("should paginate graphql with variables from previous page", async () => {
@@ -330,7 +356,7 @@ describe("fetchPaginate", () => {
       }
     );
     assert.equal(pages.length, 3);
-    assert.deepEqual(items, ["p1", "p2", "p3"]);
+    assert.deepStrictEqual(items, ["p1", "p2", "p3"]);
   });
 
   const productsQuery = `query Products($cursor: String) {
@@ -352,7 +378,7 @@ describe("fetchPaginate", () => {
       }
     );
     assert.equal(pages.length, 3);
-    assert.deepEqual(items, ["p1", "p2", "p3"]);
+    assert.deepStrictEqual(items, ["p1", "p2", "p3"]);
   });
 
   it("should use a string returned by graphql variables as the cursor", async () => {
@@ -368,7 +394,7 @@ describe("fetchPaginate", () => {
       }
     );
     assert.equal(pages.length, 3);
-    assert.deepEqual(items, ["p1", "p2", "p3"]);
+    assert.deepStrictEqual(items, ["p1", "p2", "p3"]);
   });
 
   it("should paginate with a cursor query parameter using a response path", async () => {
@@ -377,7 +403,7 @@ describe("fetchPaginate", () => {
       getItems,
     });
 
-    assert.deepEqual(items, ["one", "two", "three"]);
+    assert.deepStrictEqual(items, ["one", "two", "three"]);
   });
 
   it("should paginate from a starting cursor", async () => {
@@ -390,7 +416,7 @@ describe("fetchPaginate", () => {
       }
     );
 
-    assert.deepEqual(items, ["two", "three"]);
+    assert.deepStrictEqual(items, ["two", "three"]);
   });
 
   it("should paginate from a numeric zero cursor", async () => {
@@ -403,7 +429,7 @@ describe("fetchPaginate", () => {
       }
     );
 
-    assert.deepEqual(items, ["zero", "one"]);
+    assert.deepStrictEqual(items, ["zero", "one"]);
   });
 
   it("should start GraphQL cursor pagination from a cursor", async () => {
@@ -416,7 +442,7 @@ describe("fetchPaginate", () => {
       getItems: (body) => body.data.products.list,
     });
 
-    assert.deepEqual(items, ["p2", "p3"]);
+    assert.deepStrictEqual(items, ["p2", "p3"]);
   });
 
   it("should paginate with a custom cursor parameter using a function", async () => {
@@ -429,7 +455,7 @@ describe("fetchPaginate", () => {
       }
     );
 
-    assert.deepEqual(items, ["one", "two"]);
+    assert.deepStrictEqual(items, ["one", "two"]);
   });
 
   it("should follow a cursor after an empty page", async () => {
@@ -442,7 +468,7 @@ describe("fetchPaginate", () => {
       }
     );
 
-    assert.deepEqual(items, ["two"]);
+    assert.deepStrictEqual(items, ["two"]);
   });
 
   it("should use root getCursor for GraphQL cursor pagination", async () => {
@@ -454,7 +480,7 @@ describe("fetchPaginate", () => {
       getItems: (body) => body.data.products.list,
     });
 
-    assert.deepEqual(items, ["p1", "p2", "p3"]);
+    assert.deepStrictEqual(items, ["p1", "p2", "p3"]);
   });
 
   it("should accept a GraphQL query string directly", async () => {
@@ -464,7 +490,7 @@ describe("fetchPaginate", () => {
       getItems: (body) => body.data.products.list,
     });
 
-    assert.deepEqual(items, ["p1", "p2", "p3"]);
+    assert.deepStrictEqual(items, ["p1", "p2", "p3"]);
   });
 
   describe("graphql limit variable", () => {
@@ -494,7 +520,7 @@ describe("fetchPaginate", () => {
         getFetch,
       });
 
-      assert.deepEqual(items, ["p1", "p2", "p3"]);
+      assert.deepStrictEqual(items, ["p1", "p2", "p3"]);
       assert.equal(bodies.length, 3);
       bodies.forEach((body) => {
         assert.equal(body.query, limitQuery);
@@ -515,8 +541,8 @@ describe("fetchPaginate", () => {
         getFetch,
       });
 
-      assert.match(bodies[0].query, /first: \$limit/);
-      assert.doesNotMatch(bodies[0].query, /first: 10/);
+      assert.ok(bodies[0].query.includes("first: $limit"));
+      assert.ok(!bodies[0].query.includes("first: 10"));
     });
 
     it("should let explicit graphql variables override the limit option", async () => {
