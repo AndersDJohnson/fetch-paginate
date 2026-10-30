@@ -21,7 +21,7 @@
   "devDependencies": {
     "@types/node": "^26.6.5",
     "@types/parse-link-header": "^2.0.3",
-    "eslint": "^5.16.0",
+    "eslint": "^10.13.0",
     "nock": "^15.0.5",
     "prettier": "^3.9.10",
     "typescript": "^7.0.2"
