@@ -138,3 +138,100 @@ nock(base)
   .times(Infinity)
   .query({ offset: "3", limit: "1" })
   .reply(200, '{ "list": [] }');
+
+nock(base)
+  .post("/graphql")
+  .times(Infinity)
+  .reply(200, async (request) => {
+    const body = await request.json() as any;
+    const cursor = body.variables?.cursor;
+    if (body.query.includes("query Products")) {
+      const page = cursor === "cursor-1" ? 2 : cursor === "cursor-2" ? 3 : 1;
+      return {
+        data: {
+          products: {
+            list: [`p${page}`],
+            pageInfo: {
+              endCursor: page < 3 ? `cursor-${page}` : null,
+              hasNextPage: page < 3,
+            },
+          },
+        },
+      };
+    }
+
+    const page = body.variables?.page ?? 1;
+    return {
+      data: {
+        products: {
+          list: [`p${page}`],
+          nextPage: page < 3 ? page + 1 : null,
+        },
+      },
+    };
+  });
+
+nock(base)
+  .get("/hateoas")
+  .times(Infinity)
+  .reply(200, {
+    list: ["one"],
+    _links: { next: { href: "/hateoas/2" } },
+  })
+  .get("/hateoas/2")
+  .times(Infinity)
+  .reply(200, {
+    list: ["two"],
+    _links: { next: { href: "/hateoas/3" } },
+  })
+  .get("/hateoas/3")
+  .times(Infinity)
+  .reply(200, { list: ["three"], _links: {} });
+
+nock(base)
+  .get("/hateoas-links")
+  .times(Infinity)
+  .reply(200, { list: ["one"], _links: { more: { href: "/hateoas-links/2" } } })
+  .get("/hateoas-links/2")
+  .times(Infinity)
+  .reply(200, { list: ["two"], _links: {} });
+
+nock(base)
+  .get("/cursor")
+  .reply(200, { list: ["one"], nextCursor: "cursor-1" })
+  .get("/cursor")
+  .query({ cursor: "cursor-1" })
+  .reply(200, { list: ["two"], nextCursor: "cursor-2" })
+  .get("/cursor")
+  .query({ cursor: "cursor-2" })
+  .reply(200, { list: ["three"], nextCursor: null });
+
+nock(base)
+  .get("/cursor-start")
+  .query({ cursor: "cursor-1" })
+  .reply(200, { list: ["two"], nextCursor: "cursor-2" })
+  .get("/cursor-start")
+  .query({ cursor: "cursor-2" })
+  .reply(200, { list: ["three"], nextCursor: null });
+
+nock(base)
+  .get("/cursor-start-zero")
+  .query({ cursor: "0" })
+  .reply(200, { list: ["zero"], nextCursor: "1" })
+  .get("/cursor-start-zero")
+  .query({ cursor: "1" })
+  .reply(200, { list: ["one"], nextCursor: null });
+
+nock(base)
+  .get("/cursor-custom")
+  .reply(200, { list: ["one"], nextCursor: "cursor-1" })
+  .get("/cursor-custom")
+  .query({ after: "cursor-1" })
+  .reply(200, { list: ["two"], nextCursor: null });
+
+nock(base)
+  .get("/cursor-empty")
+  .reply(200, { list: [], nextCursor: "cursor-1" })
+  .get("/cursor-empty")
+  .query({ cursor: "cursor-1" })
+  .reply(200, { list: ["two"], nextCursor: null });
