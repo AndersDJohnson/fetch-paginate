@@ -16,17 +16,17 @@
   resolved "https://registry.yarnpkg.com/@babel/helper-validator-identifier/-/helper-validator-identifier-7.29.7.tgz#bd87084ced0c796ec46bda492de6e83d29e89fc2"
   integrity sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg==
 
-"@mswjs/interceptors@^0.44.0":
-  version "0.44.0"
-  resolved "https://registry.yarnpkg.com/@mswjs/interceptors/-/interceptors-0.44.0.tgz#20055ab61c6937d6146ecd3c053f939b14970bca"
-  integrity sha512-IYHevRStF4ijM20GI9c9Ndhw483NSAjCydQhUr4/zIB0BNLsTVw3vFAxTo6TlvX4QnV60wEHttUa9539TTAq+A==
+"@mswjs/interceptors@^0.45.11":
+  version "0.45.11"
+  resolved "https://registry.yarnpkg.com/@mswjs/interceptors/-/interceptors-0.45.11.tgz#482500e9e615028b778a0328e864b53c68364908"
+  integrity sha512-+ISPERIRIHhSVnFQRGCP9jDJXxn0/z2+pWWbXUym6JUfpUCRW2Pvro4P9RBKGYUKTKAULszKurKMTQIsaJUIgQ==
   dependencies:
     "@open-draft/until" "^3.0.1"
     "@types/debug" "^4.1.13"
     debug "^4.4.3"
     is-node-process "^1.2.0"
     outvariant "^1.4.3"
-    rettime "^0.11.11"
+    rettime "^0.11.12"
 
 "@open-draft/until@^3.0.1":
   version "3.0.1"
@@ -654,11 +654,11 @@ nice-try@^1.0.4:
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
 
 nock@^15.0.5:
-  version "15.0.5"
-  resolved "https://registry.yarnpkg.com/nock/-/nock-15.0.5.tgz#b838af589022c430550069ab1dbc63b7b60e6299"
-  integrity sha512-nVeuZGS2we1PyvqbW082Qj0EB4bd//6pZk/zOPDlaTPU72qcWrqfHg3kx9JcBcH1fJxwJHjmsfuQ4mss42su4w==
+  version "15.0.6"
+  resolved "https://registry.yarnpkg.com/nock/-/nock-15.0.6.tgz#1939705a29b9e8bb22659f974eb02c1f4e37403c"
+  integrity sha512-eyOJ1wemcgJZ+PQC3lecfF3gQc2SAmGlQ4mHGfFXcOa/+7v0qjnX+ft/NV2F+4vCwzkXZqik3gS6ZIjh+QcigQ==
   dependencies:
-    "@mswjs/interceptors" "^0.44.0"
+    "@mswjs/interceptors" "^0.45.11"
 
 once@^1.3.0:
   version "1.4.0"
@@ -768,7 +768,7 @@ restore-cursor@^2.0.0:
     onetime "^2.0.0"
     signal-exit "^3.0.2"
 
-rettime@^0.11.11:
+rettime@^0.11.12:
   version "0.11.12"
   resolved "https://registry.yarnpkg.com/rettime/-/rettime-0.11.12.tgz#db50d2baf9178ed64615909a424222a7e59e7ba4"
   integrity sha512-5ExtR1ppiDBQkVoPw5NAqdbfH4Iq2VOmQKHMtUoaFxA9bo2krzFYBtyq6K40xxbYp+2w/YOr6D+1ToF6tTN53A==
